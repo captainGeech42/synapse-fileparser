@@ -1,5 +1,4 @@
 import os
-import aiofiles
 
 class StormLoader:
     """A mixin that loads Storm code from disk"""
@@ -7,12 +6,12 @@ class StormLoader:
     def __init__(self, storm_files: list[str] = []):
         self.storm_files = storm_files
     
-    async def load_storm(self) -> str:
+    def load_storm(self) -> str:
         """Load the storm code from disk"""
 
         code = ""
         for fp in self.storm_files:
-            async with aiofiles.open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "pkg", "storm", fp), "r") as f:
-                code += (await f.read()) + "\n"
+            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "storm", fp), "r") as f:
+                code += f.read() + "\n"
         
         return code

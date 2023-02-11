@@ -1,7 +1,7 @@
 import fileparser.consts as f_consts
 import fileparser.pkg.defs as f_defs
 
-async def get_pkgs():
+def get_pkgs():
     """Get package definitions"""
 
     return (
@@ -9,16 +9,7 @@ async def get_pkgs():
             "name": f_consts.svc_name,
             "version": f_consts.svc_vers,
             "synapse_minversion": f_consts.svc_minvers,
-            "modules": [await x.export() for x in f_defs.modules],
-            "commands": [await x.export() for x in f_defs.commands],
+            "modules": [x.export() for x in f_defs.get_modules()],
+            "commands": [x.export() for x in f_defs.get_commands()],
         },
     )
-
-async def get_evts():
-    """Get service event definitions"""
-
-    return {
-        "add": {
-            "storm": f"[(meta:source={f_consts.svc_guid} :name=zw.fileparser)]"
-        }
-    }

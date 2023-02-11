@@ -13,13 +13,10 @@ class FileparserApi(s_cell.CellApi, s_stormsvc.StormSvc):
     A Telepath API for the Fileparser service.
     """
 
-    async def getStormSvcInfo(self):
-        return {
-            'name': f_consts.svc_name,
-            'vers': f_consts.svc_vers,
-            'evts': await f_pkg.get_evts(),
-            'pkgs': await f_pkg.get_pkgs()
-        }
+    _storm_svc_name = f_consts.svc_name
+    _storm_svc_vers = f_consts.svc_vers
+    _storm_svc_evts = f_consts.svc_evts
+    _storm_svc_pkgs = f_pkg.get_pkgs()
 
     async def getData(self, query):
         return await self.cell.getData(query)

@@ -1,5 +1,12 @@
+import enum
+
 import fileparser.consts as f_consts
 import fileparser.pkg.loader as f_loader
+
+class ArgType(enum.Enum):
+    STR = "str"
+    INT = "int"
+    BOOL = "bool"
 
 class StormCommand(f_loader.StormLoader):
     """Definition of a Storm service package command"""
@@ -16,17 +23,26 @@ class StormCommand(f_loader.StormLoader):
 
         self.args = []
     
-    def add_arg(self, name: str, options: dict):
-        """Add an arg for the command. options follows a similar structure to argparse"""
+    def add_flag(self, flag: str, help: str):
+        """Add a flag to the command"""
 
-        self.args.append((name, options))
+        self.args.append((flag, {"default": False, "action": "store_true", "help": help}))
+    
+    def add_arg(self, name: str, arg_type: ArgType, help: str, default = None):
+        """Add an argument to the command. If $name starts with `--`, arg is a flag, otherwise it's a positional arg."""
+
+        opts = {"help": help, "type": arg_type.value}
+        if default is not None:
+            opts["default"] = default
+
+        self.args.append((name, opts))
 
     def add_conf(self, name: str, value: str):
         """Add a static configuration option for the command"""
 
         self.conf[name] = value
 
-    async def export(self) -> dict:
+    def export(self) -> dict:
         """Build the command definition for the package to load"""
 
         return {
@@ -35,5 +51,5 @@ class StormCommand(f_loader.StormLoader):
             "cmdargs": self.args,
             "cmdconf": self.conf,
             "forms": {"input": self.input_forms, "output": self.output_forms},
-            "storm": await self.load_storm()
+            "storm": self.load_storm()
         }

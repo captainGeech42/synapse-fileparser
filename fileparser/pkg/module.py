@@ -9,10 +9,10 @@ class StormModule(f_loader.StormLoader):
 
         self.name = name
 
-    async def export(self) -> dict:
+    def export(self) -> dict:
         """Build the module definition for the package to load"""
 
         return {
             "name": f"{f_consts.svc_name}.{self.name}",
-            "storm": await self.load_storm()
+            "storm": self.load_storm()
         }

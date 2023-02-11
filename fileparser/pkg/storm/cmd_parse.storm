@@ -1,0 +1,5 @@
+init {
+    $lib.print("doing the parse action")
+    $mod = $lib.import(zw.fileparser.test)
+    $mod.modPls()
+}
