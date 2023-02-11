@@ -1,0 +1,1 @@
+synapse>=2.122.0,<3.0.0 # in the docker build, this is already satisifed by the parent image

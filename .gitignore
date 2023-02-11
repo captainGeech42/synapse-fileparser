@@ -1,0 +1,6 @@
+docker-compose.yml
+docker-compose.yaml
+**/__pycache__
+**/*.pyc
+test.py
+.pytest_cache
