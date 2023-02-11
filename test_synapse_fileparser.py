@@ -1,33 +1,104 @@
+import os
 import copy
+import aiofiles
+import binascii
 import contextlib
 
+import synapse.axon as s_axon
+import synapse.cortex as s_core
 import synapse.tests.utils as s_test
 
 import fileparser as fplib
 
+# HOLY GRAIL REFERENCE FOR TESTING THIS SHIT: https://github.com/vertexproject/synapse/blob/1dc3a2a4fa25537e9a4f88e6923913079ebcf77f/synapse/tests/test_lib_stormsvc.py
+
 class SynapseFileparserTest(s_test.SynTest):
     
     @contextlib.asynccontextmanager
-    async def getTestFileparser(self, conf=None, dirn=None):
+    async def getTestFileparser(self, conf=None, dirn=None) -> tuple[fplib.FileparserCell, s_axon.AxonApi]:
+        """Get a test fileparser and it's Axon proxy"""
+
         if conf is None:
             conf = {}
         conf = copy.deepcopy(conf)
 
-        with self.withNexusReplay():
-            if dirn:
-                async with await fplib.FileparserCell.anit(dirn, conf=conf) as cell:
-                    yield cell
-            else:
-                with self.getTestDir() as dirn:
+        async with self.getTestAxon() as axon:
+            if "axon" not in conf:
+                conf["axon"] = axon.getLocalUrl()
+            with self.withNexusReplay():
+                if dirn:
                     async with await fplib.FileparserCell.anit(dirn, conf=conf) as cell:
-                        yield cell
-    
-    async def test_src(self):
-        async with self.getTestFileparser() as fp:
+                        async with axon.getLocalProxy() as prox:
+                            yield (cell, prox)
+                else:
+                    with self.getTestDir() as dirn:
+                        async with await fplib.FileparserCell.anit(dirn, conf=conf) as cell:
+                            async with axon.getLocalProxy() as prox:
+                                yield (cell, prox)
+
+    @contextlib.asynccontextmanager
+    async def getTestFpCore(self, conf=None, dirn=None) -> tuple[fplib.FileparserCell, s_axon.AxonApi, s_core.Cortex]:
+        """Get a test fileparser, axon, and a cortex with the storm service initialized"""
+
+        async with self.getTestFileparser(conf=conf, dirn=dirn) as (fp, axon):
             async with self.getTestCore() as core:
                 await core.callStorm("service.add fileparser $url", opts={"vars": {"url": fp.getLocalUrl()}})
 
-                mesgs = await core.stormlist("service.list")
-                self.stormIsInPrint(fplib.svc_name, mesgs)
+                # wait for the service to finish initialization
+                await core.nodes("$lib.service.wait(fileparser)")
 
-                self.assertEqual(await core.count("meta:source=$g +:name=zw.fileparser", opts={"vars": {"g": fplib.svc_guid}}), 1)
+                yield (fp, axon, core)
+
+    @contextlib.asynccontextmanager
+    async def getTestFpProxy(self, conf=None, dirn=None) -> tuple[fplib.FileparserCell, fplib.FileparserApi]:
+        """Get a test fileparser and the telepath proxy"""
+
+        async with self.getTestFileparser(conf=conf, dirn=dirn) as (fp, _):
+            async with fp.getLocalProxy as prox:
+                yield (fp, prox)
+
+    async def _t_uploadTestFiles(self, axon: s_axon.AxonApi):
+        for fn in os.listdir("test_files"):
+            async with aiofiles.open(os.path.join("test_files", fn), "rb") as f:
+                buf = await f.read()
+                (sz, _) = await axon.put(buf)
+                self.eq(sz, len(buf))
+
+    async def test_fileparser(self):
+        async with self.getTestFileparser() as (fp, axon):
+            fp: fplib.FileparserCell
+            axon: s_axon.AxonApi
+
+            await self._t_uploadTestFiles(axon)
+            
+            # test size
+            ls_sha256_str = "7effe56efc49e3d252a84d8173712bad05beef4def460021a1c7865247125fee"
+            ls_sha256 = binascii.unhexlify(ls_sha256_str)
+            sz = await axon.size(ls_sha256)
+            self.assertIsNotNone(sz)
+            self.eq(await fp.getSize(ls_sha256_str), sz)
+
+            # test hashes
+            hs = await axon.hashset(ls_sha256)
+            self.eq(await fp.getHashes(ls_sha256_str), hs)
+
+    async def test_storm_pkg(self):
+        async with self.getTestFpCore() as (fp, axon, core):
+            fp: fplib.FileparserCell
+            axon: s_axon.AxonApi
+            core: s_core.Cortex
+
+            mesgs = await core.stormlist("service.list")
+            self.stormIsInPrint(fplib.svc_name, mesgs)
+
+            self.assertEqual(await core.count("meta:source=$g +:name=zw.fileparser", opts={"vars": {"g": fplib.svc_guid}}), 1)
+
+            await self._t_uploadTestFiles(axon)
+
+            ls_sha256_str = "7effe56efc49e3d252a84d8173712bad05beef4def460021a1c7865247125fee"
+            ls_sha256 = binascii.unhexlify(ls_sha256_str)
+            await core.callStorm("[file:bytes=$s]", opts={"vars": {"s": ls_sha256_str}})
+            props = await core.callStorm("file:bytes=$s | zw.fileparser.parse | return((:size,:md5,:sha1,:sha256,:sha512))", opts={"vars": {"s": ls_sha256_str}})
+            sz = await axon.size(ls_sha256)
+            hs = await axon.hashset(ls_sha256)
+            self.eq(props, (sz, hs["md5"], hs["sha1"], hs["sha256"], hs["sha512"]))

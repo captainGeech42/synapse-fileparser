@@ -18,13 +18,14 @@ class FileparserApi(s_cell.CellApi, s_stormsvc.StormSvc):
     _storm_svc_evts = f_consts.svc_evts
     _storm_svc_pkgs = f_pkg.get_pkgs()
 
-    async def getData(self, query):
-        return await self.cell.getData(query)
-
-    async def getInfo(self):
-        await self._reqUserAllowed(("example", "info"))
-        return await self.cell.getInfo()
-
     @s_cell.adminapi()
     async def getAdminInfo(self):
         return await self.cell.getAdminInfo()
+
+    async def getSize(self, sha256: str):
+        await self._reqUserAllowed(("zw", "fileparser", "user"))
+        return await self.cell.getSize(sha256)
+
+    async def getHashes(self, sha256: str):
+        await self._reqUserAllowed(("zw", "fileparser", "user"))
+        return await self.cell.getHashes(sha256)

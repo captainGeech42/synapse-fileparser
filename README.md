@@ -1,6 +1,12 @@
 # synapse-fileparser
 Synapse Advanced Power-up to parse files because I don't have enterprise ;(
 
+# Permissions
+
+This package exposes one permission level:
+
+* `zw.fileparser.user`: Allows use of the fileparser service
+
 # Deployment
 
 ## 1. Provision the aha service

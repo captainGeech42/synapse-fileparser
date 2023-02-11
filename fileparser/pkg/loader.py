@@ -11,7 +11,8 @@ class StormLoader:
 
         code = ""
         for fp in self.storm_files:
-            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "storm", fp), "r") as f:
+            p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "storm", fp)
+            with open(p, "r") as f:
                 code += f.read() + "\n"
         
         return code

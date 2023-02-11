@@ -9,6 +9,7 @@ def get_commands() -> list[f_cmd.StormCommand]:
     ]
 
     parse_cmd = f_cmd.StormCommand("parse", "Parse a file", "cmd_parse.storm", input_forms=forms, output_forms=forms)
+    parse_cmd.add_default_args()
     return [parse_cmd]
 
 def get_modules() -> list[f_module.StormModule]:

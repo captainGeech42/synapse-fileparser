@@ -1,5 +1,5 @@
-import asyncio
 import sys
+import asyncio
 
 import fileparser.cell as f_cell
 
