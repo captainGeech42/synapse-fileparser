@@ -1,13 +1,9 @@
 init {
     $svc = $lib.service.get($cmdconf.svciden)
+    if $cmdopts.debug { $lib.debug = $lib.true }
 }
 
-/*
-workflow
-handle each of the events
-when handling an evt:bytes event, make a new file:bytes node and subquery pipe to zw.fileparser.parse
-    so may be recursive but shouldnt break?
-*/
+// TODO: user overridden mime
 
 +file:bytes {
     $sz = $svc.getSize(:sha256)
@@ -20,11 +16,40 @@ when handling an evt:bytes event, make a new file:bytes node and subquery pipe t
     if $mime {[:mime=$mime] {[file:ismime=($node,$mime)]} }
 
     for $evt in $svc.parseFile(:sha256) {
+        if $lib.debug { $lib.print($evt) }
         switch $evt.evt {
-            prop: { [:$evt.prop=$evt.value] }
+            prop: {
+                if ($evt.form) {
+                    { [(*$evt.form=$evt.prim :$evt.prop=$evt.value <(seen)+ {meta:source=$cmdconf.srcguid})] }
+                } else {
+                    [:$evt.prop=$evt.value]
+                }
+            }
+            node: {
+                { [(*$evt.form=$evt.prim <(seen)+ {meta:source=$cmdconf.srcguid})]
+
+                    for $prop in $evt.props {
+                        [(*$evt.form=$evt.prim :$prop.0=$prop.1)]
+                    }
+                }
+            }
+            edge: {
+                { [(*$evt.n1.form=$evt.n1.prim +($evt.edge)> {*$evt.n2.form=$evt.n2.prim})] }
+            }
+            tag: {
+                if ($evt.form) {
+                    { [(*$evt.form=$evt.prim +#$evt.tag <(seen)+ {meta:source=$cmdconf.srcguid})] }
+                } else {
+                    [+#$evt.tag]
+                }
+            }
+            bytes: {
+                { [(file:bytes=$evt.sha256 <(seen)+ {meta:source=$cmdconf.srcguid})]
+                    if $evt.name {[(file:bytes=$evt.sha256 :name=$evt.name)]}
+                    // TODO: parse
+                }
+            }
             err: { $lib.warn($evt.mesg) }
         }
     }
 }
-
-fini { $lib.print("parse done") }

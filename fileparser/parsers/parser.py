@@ -8,6 +8,7 @@ import synapse.telepath as s_telepath
 
 log = logging.getLogger(__name__)
 
+Node = tuple[str, any] # form->prim
 ParseEvent = dict[str, Any]
 
 class FileParser(s_base.Base):
@@ -32,53 +33,67 @@ class FileParser(s_base.Base):
     async def _uploadBytes(self, evt):
         """Upload bytes to the axon. Accepts events with the param `bytes`"""
 
-        with s_telepath.withTeleEnv():
-            with s_telepath.openurl(self.axon_url) as axon:
+        if evt[0] != "zw:fileparser:newfile":
+            log.warning("got a different event for callback: %s", evt[0])
+            return
+
+        async with s_telepath.withTeleEnv():
+            async with await s_telepath.openurl(self.axon_url) as axon:
                 axon: s_axon.AxonApi
 
-                return await axon.put(evt.get("bytes"))
+                return await axon.put(evt[1].get("bytes"))
 
     @classmethod
-    async def _evt_prop(cls, prop: str, value: Any, node: str | None = None) -> ParseEvent:
+    async def _evt_prop(cls, prop: str, value: Any, node: Node | None = None) -> ParseEvent:
         """Generate an event for setting a property, optionally to the specified node (by default goes on the input file:bytes node)"""
-        
-        if node is not None:
-            np = node.split("=", 1)
-        
+
+        if prop.startswith(":"):
+            log.warning("removing leading : from prop name: %s", prop)
+            prop = prop[1:]
+
         evt = {"evt": "prop", "prop": prop, "value": value}
         
         if node is not None:
-            evt["form"] = np[0]
-            evt["prim"] = np[1]
+            evt["form"] = node[0]
+            evt["prim"] = node[1]
 
         return evt
     
     @classmethod
-    async def _evt_node(cls, form: str, prim: str, props: list[dict[str, Any]]) -> ParseEvent:
+    async def _evt_node(cls, node: Node, props: list[tuple[str, Any]] = []) -> ParseEvent:
         """Generate an event for creating a new node"""
+        
+        # np = node.split("=", 1)
+        # form = np[0]
+        # prim = np[1]
 
-        return {"evt": "node", "form": form, "prim": prim, "props": props}
+        _props = []
+        for (k, v) in props:
+            if k.startswith(":"):
+                log.warning("removing leading : from prop name: %s", k)
+                k = k[1:]
+            _props.append((k, v))
+
+        return {"evt": "node", "form": node[0], "prim": node[1], "props": _props}
 
     @classmethod
-    async def _evt_edge(cls, n1: str, n2: str, edge: str) -> ParseEvent:
+    async def _evt_edge(cls, n1: Node, n2: Node, edge: str) -> ParseEvent:
         """Generate an event for creating a lightweight edge"""
 
-        n1p = n1.split("=", 1)
-        n2p = n2.split("=", 1)
-
-        return {"evt": "edge", "n1": {"form": n1p[0], "prim": n1p[1]}, "n2": {"form": n2p[0], "prim": n2p[1]}, "edge": edge}
+        return {"evt": "edge", "n1": {"form": n1[0], "prim": n1[1]}, "n2": {"form": n2[0], "prim": n2[1]}, "edge": edge}
 
     @classmethod
     async def _evt_tag(cls, tag: str, node: str | None = None) -> ParseEvent:
         """Generate an event for adding a tag, optionally to the specified node (by default goes on the input file:bytes node)"""
 
-        if node is not None:
-            np = node.split("=", 1)
+        if tag.startswith("#"):
+            log.warning("removing leading # from tag: %s", tag)
+            tag = tag[1:]
         
         evt = {"evt": "tag", "tag": tag}
         if node is not None:
-            evt["form"] = np[0]
-            evt["prim"] = np[1]
+            evt["form"] = node[0]
+            evt["prim"] = node[1]
         
         return evt
     
@@ -88,14 +103,18 @@ class FileParser(s_base.Base):
 
         return {"evt": "err", "mesg": mesg}
     
-    async def _evt_bytes(self, buf: bytes) -> ParseEvent:
+    async def _evt_bytes(self, buf: bytes, name: str | None = None) -> ParseEvent:
         """Generate an event for a new file:bytes to be created"""
 
         await self.fire("zw:fileparser:newfile", bytes=buf)
 
-        return {"evt": "bytes", "sha256": hashlib.sha256(buf).hexdigest()}
+        evt = {"evt": "bytes", "sha256": hashlib.sha256(buf).hexdigest()}
+        if name is not None:
+            evt["name"] = name
+        
+        return evt
 
-    async def parseFile(self, filebytes: bytes):
+    async def parseFile(self, sha256: str, filebytes: bytes):
         """Parse a file. Must be overridden by child class. Yields ParseEvent objects"""
 
         raise NotImplementedError

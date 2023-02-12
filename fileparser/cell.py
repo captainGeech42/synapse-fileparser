@@ -100,6 +100,8 @@ class FileparserCell(s_cell.Cell):
     async def parseFile(self, sha256: str, mime: str | None = None) -> AsyncIterator[f_parsers.ParseEvent]:
         """Parse a file according to the detected or specified MIME type"""
 
+        log.info("parsing file: %s", sha256)
+
         async with s_telepath.withTeleEnv():
             async with await s_telepath.openurl(self.axon_url) as axon:
                 axon: s_axon.AxonApi
@@ -117,7 +119,7 @@ class FileparserCell(s_cell.Cell):
                     yield await f_parsers.FileParser._evt_err(mesg)
                     return
                 
-                async for evt in self.parsers[mime].parseFile(buf):
+                async for evt in self.parsers[mime].parseFile(sha256, buf):
                     if evt is None:
                         return
                     yield evt
