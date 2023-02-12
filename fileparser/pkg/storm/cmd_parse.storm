@@ -2,10 +2,29 @@ init {
     $svc = $lib.service.get($cmdconf.svciden)
 }
 
+/*
+workflow
+handle each of the events
+when handling an evt:bytes event, make a new file:bytes node and subquery pipe to zw.fileparser.parse
+    so may be recursive but shouldnt break?
+*/
+
 +file:bytes {
     $sz = $svc.getSize(:sha256)
     if $sz {[:size=$sz]}
     
     $hashes = $svc.getHashes(:sha256)
     if $hashes {[:md5=$hashes.md5 :sha1=$hashes.sha1 :sha256=$hashes.sha256 :sha512=$hashes.sha512]}
+
+    $mime = $svc.getMime(:sha256)
+    if $mime {[:mime=$mime] {[file:ismime=($node,$mime)]} }
+
+    for $evt in $svc.parseFile(:sha256) {
+        switch $evt.evt {
+            prop: { [:$evt.prop=$evt.value] }
+            err: { $lib.warn($evt.mesg) }
+        }
+    }
 }
+
+fini { $lib.print("parse done") }

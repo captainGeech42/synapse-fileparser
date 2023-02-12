@@ -58,6 +58,8 @@ class SynapseFileparserTest(s_test.SynTest):
                 yield (fp, prox)
 
     async def _t_uploadTestFiles(self, axon: s_axon.AxonApi):
+        """Upload all of the test files to the provided Axon cell"""
+
         for fn in os.listdir("test_files"):
             async with aiofiles.open(os.path.join("test_files", fn), "rb") as f:
                 buf = await f.read()
@@ -82,6 +84,11 @@ class SynapseFileparserTest(s_test.SynTest):
             hs = await axon.hashset(ls_sha256)
             self.eq(await fp.getHashes(ls_sha256_str), hs)
 
+            # test mime
+            self.eq(await fp.getMime(ls_sha256_str), "application/x-elf")
+            self.eq(await fp.getMime("a7354b9c6297b6b5537d19a12091e7d89bd52e38bc4d9498fa63aa8c3e700cb6"), "application/vnd.microsoft.portable-executable")
+            self.eq(await fp.getMime("07807083be9e8a65354e912bd9e7863997b022c210299e60ce25f6e9ddccf1ac"), "application/vnd.microsoft.portable-executable")
+
     async def test_storm_pkg(self):
         async with self.getTestFpCore() as (fp, axon, core):
             fp: fplib.FileparserCell
@@ -97,8 +104,11 @@ class SynapseFileparserTest(s_test.SynTest):
 
             ls_sha256_str = "7effe56efc49e3d252a84d8173712bad05beef4def460021a1c7865247125fee"
             ls_sha256 = binascii.unhexlify(ls_sha256_str)
-            await core.callStorm("[file:bytes=$s]", opts={"vars": {"s": ls_sha256_str}})
-            props = await core.callStorm("file:bytes=$s | zw.fileparser.parse | return((:size,:md5,:sha1,:sha256,:sha512))", opts={"vars": {"s": ls_sha256_str}})
+            props = await core.callStorm("[file:bytes=$s] | zw.fileparser.parse | return((:size,:md5,:sha1,:sha256,:sha512, :mime))", opts={"vars": {"s": ls_sha256_str}})
             sz = await axon.size(ls_sha256)
             hs = await axon.hashset(ls_sha256)
-            self.eq(props, (sz, hs["md5"], hs["sha1"], hs["sha256"], hs["sha512"]))
+            self.eq(props, (sz, hs["md5"], hs["sha1"], hs["sha256"], hs["sha512"], "application/x-elf"))
+
+            exe_sha256 = "a7354b9c6297b6b5537d19a12091e7d89bd52e38bc4d9498fa63aa8c3e700cb6"
+            imphash = await core.callStorm("[file:bytes=$s] | zw.fileparser.parse | return(:mime:pe:imphash)", opts={"vars": {"s": exe_sha256}})
+            self.eq(imphash, "a4dc751c02f601828a098e8da5850f7d")

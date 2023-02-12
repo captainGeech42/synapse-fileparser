@@ -29,3 +29,14 @@ class FileparserApi(s_cell.CellApi, s_stormsvc.StormSvc):
     async def getHashes(self, sha256: str):
         await self._reqUserAllowed(("zw", "fileparser", "user"))
         return await self.cell.getHashes(sha256)
+
+    async def getMime(self, sha256: str):
+        await self._reqUserAllowed(("zw", "fileparser", "user"))
+        return await self.cell.getMime(sha256)
+    
+    async def parseFile(self, sha256: str):
+        await self._reqUserAllowed(("zw", "fileparser", "user"))
+        async for evt in self.cell.parseFile(sha256):
+            if evt is None:
+                return
+            yield evt
