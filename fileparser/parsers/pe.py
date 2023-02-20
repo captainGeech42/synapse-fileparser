@@ -11,5 +11,12 @@ class PeParser(f_parser.FileParser):
 
     async def parseFile(self, sha256: str, filebytes: bytes) -> AsyncGenerator[f_parser.ParseEvent, None]:
         pe = pefile.PE(data=filebytes)
+
         imphash = pe.get_imphash()
         yield await self._evt_prop(("file:bytes", sha256), "mime:pe:imphash", imphash)
+
+        try:
+            for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
+                yield await self._evt_node(("file:mime:pe:export", (sha256,exp.name.decode())))
+        except AttributeError:
+            pass

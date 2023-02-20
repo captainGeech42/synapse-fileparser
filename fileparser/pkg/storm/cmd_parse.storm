@@ -20,6 +20,6 @@ init {
     if $mime {[:mime=$mime] {[(file:ismime=($node,$mime) <(seen)+ {meta:source=$cmdconf.srcguid})]} }
 
     for $evt in $svc.parseFile(:sha256) {
-        yield $modevt.handleEvt($evt, $cmdconf.srcguid)
+        yield $modevt.handleEvt($evt)
     }
 }

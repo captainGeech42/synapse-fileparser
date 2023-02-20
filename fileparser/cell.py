@@ -34,7 +34,7 @@ class FileparserCell(s_cell.Cell):
 
         self.axon_url = self.conf.get("axon")
         if not self.axon_url:
-            raise s_exc.NeedConfValu(mesg="The fileparser server has no axon url configured")
+            raise s_exc.NeedConfValu(mesg="The fileparser service has no axon url configured")
 
         self.parsers: dict[str, f_parsers.FileParser] = {}
         for cls in f_parsers.get_parsers():

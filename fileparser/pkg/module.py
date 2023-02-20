@@ -9,10 +9,18 @@ class StormModule(f_loader.StormLoader):
 
         self.name = name
 
+        self.conf = {"srcguid": f_consts.svc_guid}
+
+    def add_conf(self, name: str, value: str):
+        """Add a static configuration option for the module"""
+
+        self.conf[name] = value
+
     def export(self) -> dict:
         """Build the module definition for the package to load"""
 
         return {
             "name": f"{f_consts.svc_name}.{self.name}",
+            "modconf": self.conf,
             "storm": self.load_storm()
         }

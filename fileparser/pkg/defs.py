@@ -15,5 +15,6 @@ def get_commands() -> list[f_cmd.StormCommand]:
 def get_modules() -> list[f_module.StormModule]:
     return [
         f_module.StormModule("dmon", "mod_dmon.storm"),
-        f_module.StormModule("evt", "mod_evt.storm")
+        f_module.StormModule("evt", "mod_evt.storm"),
+        f_module.StormModule("migrate", "mod_migrate.storm"),
     ]
