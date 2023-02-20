@@ -1,0 +1,30 @@
+// Handle events emitted by a fileparser
+function handleEvt(evt, srcguid) {
+    if $lib.debug { $lib.print($evt) }
+    $lib.print($node)
+
+    switch $evt.evt {
+        prop: {
+            [(*$evt.form=$evt.prim :$evt.prop=$evt.value <(seen)+ {meta:source=$srcguid})]
+        }
+        node: {
+            [(*$evt.form=$evt.prim <(seen)+ {meta:source=$srcguid})]
+            for $prop in $evt.props {
+                [(*$evt.form=$evt.prim :$prop.0=$prop.1)]
+            }
+        }
+        edge: {
+            [(*$evt.n1.form=$evt.n1.prim +($evt.edge)> {*$evt.n2.form=$evt.n2.prim})]
+        }
+        tag: {
+            [(*$evt.form=$evt.prim +#$evt.tag <(seen)+ {meta:source=$srcguid})]
+        }
+        bytes: {
+            [(file:bytes=$evt.sha256 <(seen)+ {meta:source=$srcguid})]
+            if $evt.name { [(file:bytes=$evt.sha256 :name=$evt.name)] }
+
+            $lib.queue.gen(zw.fileparser.parseq).put($evt.sha256)
+        }
+        err: { $lib.warn($evt.mesg) }
+    }
+}

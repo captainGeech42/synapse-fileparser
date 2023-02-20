@@ -49,3 +49,27 @@ $ docker compose up
 ```
 storm> service.add test aha://00.test................
 ```
+
+# Model changes
+
+```
+file:mime:pe:import
+    (new form)
+
+    type: file:mime:pe:import
+    base: guid
+    doc: The fused knowledge of a file:bytes node containing a pe import.
+    
+    file: file:bytes
+    dll: str
+    name: str
+    address: int
+```
+```  
+file:mime:pe:export
+    (add props)
+
+    _address: int
+    _offset: int
+    _ordinal: int
+```

@@ -1,4 +1,4 @@
-"""Definitions for the packkage commands and modules, which will be made available in the Storm service."""
+"""Definitions for the package commands and modules, which will be made available in the Storm service."""
 
 import fileparser.pkg.cmd as f_cmd
 import fileparser.pkg.module as f_module
@@ -14,5 +14,6 @@ def get_commands() -> list[f_cmd.StormCommand]:
 
 def get_modules() -> list[f_module.StormModule]:
     return [
-        f_module.StormModule("test", "mod_test.storm")
+        f_module.StormModule("dmon", "mod_dmon.storm"),
+        f_module.StormModule("evt", "mod_evt.storm")
     ]

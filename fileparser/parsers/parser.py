@@ -1,6 +1,6 @@
 import hashlib
 import logging
-from typing import Any
+from typing import Any, AsyncGenerator
 
 import synapse.axon as s_axon
 import synapse.lib.base as s_base
@@ -44,7 +44,7 @@ class FileParser(s_base.Base):
                 return await axon.put(evt[1].get("bytes"))
 
     @classmethod
-    async def _evt_prop(cls, prop: str, value: Any, node: Node | None = None) -> ParseEvent:
+    async def _evt_prop(cls, node: Node, prop: str, value: Any) -> ParseEvent:
         """Generate an event for setting a property, optionally to the specified node (by default goes on the input file:bytes node)"""
 
         if prop.startswith(":"):
@@ -111,10 +111,12 @@ class FileParser(s_base.Base):
         evt = {"evt": "bytes", "sha256": hashlib.sha256(buf).hexdigest()}
         if name is not None:
             evt["name"] = name
+
+        # TODO: add sha256 to the parse queue for the dmon to pick up
         
         return evt
 
-    async def parseFile(self, sha256: str, filebytes: bytes):
+    async def parseFile(self, sha256: str, filebytes: bytes) -> AsyncGenerator[ParseEvent, None]:
         """Parse a file. Must be overridden by child class. Yields ParseEvent objects"""
 
         raise NotImplementedError

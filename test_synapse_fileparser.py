@@ -1,5 +1,6 @@
 import os
 import copy
+import asyncio
 import aiofiles
 import binascii
 import contextlib
@@ -61,10 +62,13 @@ class SynapseFileparserTest(s_test.SynTest):
         """Upload all of the test files to the provided Axon cell"""
 
         for fn in os.listdir("test_files"):
-            async with aiofiles.open(os.path.join("test_files", fn), "rb") as f:
-                buf = await f.read()
-                (sz, _) = await axon.put(buf)
-                self.eq(sz, len(buf))
+            try:
+                async with aiofiles.open(os.path.join("test_files", fn), "rb") as f:
+                    buf = await f.read()
+                    (sz, _) = await axon.put(buf)
+                    self.eq(sz, len(buf))
+            except IsADirectoryError:
+                continue
 
     async def test_fileparser(self):
         async with self.getTestFileparser() as (fp, axon):
@@ -98,10 +102,14 @@ class SynapseFileparserTest(s_test.SynTest):
             mesgs = await core.stormlist("service.list")
             self.stormIsInPrint(fplib.svc_name, mesgs)
 
+            mesgs = await core.stormlist("dmon.list")
+            self.stormIsInPrint("zw.fileparser.parseq", mesgs)
+
             self.assertEqual(await core.count("meta:source=$g +:name=zw.fileparser", opts={"vars": {"g": fplib.svc_guid}}), 1)
 
             await self._t_uploadTestFiles(axon)
 
+            # basic metadata modeling
             ls_sha256_str = "7effe56efc49e3d252a84d8173712bad05beef4def460021a1c7865247125fee"
             ls_sha256 = binascii.unhexlify(ls_sha256_str)
             props = await core.callStorm("[file:bytes=$s] | zw.fileparser.parse | return((:size,:md5,:sha1,:sha256,:sha512, :mime))", opts={"vars": {"s": ls_sha256_str}})
@@ -109,6 +117,21 @@ class SynapseFileparserTest(s_test.SynTest):
             hs = await axon.hashset(ls_sha256)
             self.eq(props, (sz, hs["md5"], hs["sha1"], hs["sha256"], hs["sha512"], "application/x-elf"))
 
+            # exe file modeling
             exe_sha256 = "a7354b9c6297b6b5537d19a12091e7d89bd52e38bc4d9498fa63aa8c3e700cb6"
             imphash = await core.callStorm("[file:bytes=$s] | zw.fileparser.parse | return(:mime:pe:imphash)", opts={"vars": {"s": exe_sha256}})
             self.eq(imphash, "a4dc751c02f601828a098e8da5850f7d")
+
+            # zip file modeling
+            zip_sha256 = "b74bc4edea0842b3b2f621b4dda553acf277198f3dc744e581e00141ad681ef3"
+            mime = await core.callStorm("[file:bytes=$s] | zw.fileparser.parse | +{<(seen)- meta:source:name=zw.fileparser} return (:mime)", opts={"vars": {"s": zip_sha256}})
+            self.eq(mime, "application/zip")
+
+            # make sure the subfiles get parsed
+            while await core.callStorm("return($lib.queue.get(zw.fileparser.parseq).size())") > 0:
+                await asyncio.sleep(1)
+
+            self.eq(await core.count("file:bytes=$s -> file:subfile +:path", opts={"vars": {"s": zip_sha256}}), 3)
+            self.eq(await core.count("file:subfile=('sha256:b74bc4edea0842b3b2f621b4dda553acf277198f3dc744e581e00141ad681ef3', 'sha256:07b40aacf7008293c886033acac0b9c0ab4d6cef3f4ed66944b61d96a81575e8') +:path=pics/perfection.png"), 1)
+            self.eq(await core.count("file:bytes=$s -> file:subfile :child -> file:bytes +:name +:mime", opts={"vars": {"s": zip_sha256}}), 3)
+            self.eq(await core.count("file:bytes=$s -> file:subfile :child -> file:bytes +:name=perfection.png +:mime=image/png", opts={"vars": {"s": zip_sha256}}), 1)

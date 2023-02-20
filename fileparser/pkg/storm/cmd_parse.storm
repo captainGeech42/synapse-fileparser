@@ -1,11 +1,15 @@
 init {
     $svc = $lib.service.get($cmdconf.svciden)
     if $cmdopts.debug { $lib.debug = $lib.true }
+
+    $modevt = $lib.import(zw.fileparser.evt, debug=$lib.debug)
 }
 
 // TODO: user overridden mime
 
 +file:bytes {
+    [<(seen)+ {meta:source=$cmdconf.srcguid}]
+    
     $sz = $svc.getSize(:sha256)
     if $sz {[:size=$sz]}
     
@@ -13,43 +17,9 @@ init {
     if $hashes {[:md5=$hashes.md5 :sha1=$hashes.sha1 :sha256=$hashes.sha256 :sha512=$hashes.sha512]}
 
     $mime = $svc.getMime(:sha256)
-    if $mime {[:mime=$mime] {[file:ismime=($node,$mime)]} }
+    if $mime {[:mime=$mime] {[(file:ismime=($node,$mime) <(seen)+ {meta:source=$cmdconf.srcguid})]} }
 
     for $evt in $svc.parseFile(:sha256) {
-        if $lib.debug { $lib.print($evt) }
-        switch $evt.evt {
-            prop: {
-                if ($evt.form) {
-                    { [(*$evt.form=$evt.prim :$evt.prop=$evt.value <(seen)+ {meta:source=$cmdconf.srcguid})] }
-                } else {
-                    [:$evt.prop=$evt.value]
-                }
-            }
-            node: {
-                { [(*$evt.form=$evt.prim <(seen)+ {meta:source=$cmdconf.srcguid})]
-
-                    for $prop in $evt.props {
-                        [(*$evt.form=$evt.prim :$prop.0=$prop.1)]
-                    }
-                }
-            }
-            edge: {
-                { [(*$evt.n1.form=$evt.n1.prim +($evt.edge)> {*$evt.n2.form=$evt.n2.prim})] }
-            }
-            tag: {
-                if ($evt.form) {
-                    { [(*$evt.form=$evt.prim +#$evt.tag <(seen)+ {meta:source=$cmdconf.srcguid})] }
-                } else {
-                    [+#$evt.tag]
-                }
-            }
-            bytes: {
-                { [(file:bytes=$evt.sha256 <(seen)+ {meta:source=$cmdconf.srcguid})]
-                    if $evt.name {[(file:bytes=$evt.sha256 :name=$evt.name)]}
-                    // TODO: parse
-                }
-            }
-            err: { $lib.warn($evt.mesg) }
-        }
+        yield $modevt.handleEvt($evt, $cmdconf.srcguid)
     }
 }

@@ -1,3 +1,0 @@
-function modPls() {
-    $lib.print("in the module")
-}

@@ -5,6 +5,6 @@ svc_minvers = (2, 122, 0)
 
 svc_evts = {
     "add": {
-        "storm": f"[(meta:source={svc_guid} :name=zw.fileparser)]"
+        "storm": f"[(meta:source={svc_guid} :name=zw.fileparser)] $lib.dmon.add(${{ $lib.import(zw.fileparser.dmon).dmonEntry() }}, name='zw.fileparser.parseq')"
     }
 }

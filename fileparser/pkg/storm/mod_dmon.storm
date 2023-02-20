@@ -1,0 +1,11 @@
+// Consume and handle events from the queue
+function dmonEntry() {
+    $q = $lib.queue.gen(zw.fileparser.parseq)
+
+    while $lib.true {
+        $entry = $q.pop(wait=$lib.true)
+        if (not $entry) { continue }
+
+        [file:bytes=$entry.1] | zw.fileparser.parse | spin
+    }
+}
