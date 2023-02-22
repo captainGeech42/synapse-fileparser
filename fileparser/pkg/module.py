@@ -16,6 +16,8 @@ class StormModule(f_loader.StormLoader):
 
         self.conf[name] = value
 
+        return self
+
     def export(self) -> dict:
         """Build the module definition for the package to load"""
 

@@ -1,6 +1,6 @@
 // Consume and handle events from the queue
 function dmonEntry() {
-    $q = $lib.queue.gen(zw.fileparser.parseq)
+    $q = $lib.queue.gen($modconf.parseq)
 
     while $lib.true {
         $entry = $q.pop(wait=$lib.true)

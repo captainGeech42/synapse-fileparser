@@ -1,7 +1,6 @@
 // Handle events emitted by a fileparser
 function handleEvt(evt) {
     if $lib.debug { $lib.print($evt) }
-    $lib.print($node)
 
     switch $evt.evt {
         prop: {
@@ -23,7 +22,7 @@ function handleEvt(evt) {
             [(file:bytes=$evt.sha256 <(seen)+ {meta:source=$modconf.srcguid})]
             if $evt.name { [(file:bytes=$evt.sha256 :name=$evt.name)] }
 
-            $lib.queue.gen(zw.fileparser.parseq).put($evt.sha256)
+            $lib.queue.gen($modconf.parseq).put($evt.sha256)
         }
         err: { $lib.warn($evt.mesg) }
     }

@@ -22,6 +22,8 @@ class StormCommand(f_loader.StormLoader):
         """Add a flag to the command"""
 
         self.args.append((flag, {"default": False, "action": "store_true", "help": help}))
+
+        return self
     
     def add_arg(self, name: str, arg_type: Literal['int', 'str', 'bool'], help: str, default = None):
         """Add an argument to the command. If $name starts with `--`, arg is a flag, otherwise it's a positional arg."""
@@ -32,16 +34,22 @@ class StormCommand(f_loader.StormLoader):
 
         self.args.append((name, opts))
 
+        return self
+
     def add_default_args(self):
         """Add default args to the command (--debug and --yield)"""
 
         self.add_flag("--debug", "Show verbose debug output.")
         self.add_flag("--yield", "Yield the newly created nodes.")
 
+        return self
+
     def add_conf(self, name: str, value: str):
         """Add a static configuration option for the command"""
 
         self.conf[name] = value
+
+        return self
 
     def export(self) -> dict:
         """Build the command definition for the package to load"""
