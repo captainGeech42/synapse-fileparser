@@ -114,9 +114,9 @@ class FileparserCell(s_cell.Cell):
                     mime = self._getMime(buf)
 
                 if mime not in self.parsers:
-                    mesg = f"can't parse {sha256}, no parser available for {mime}"
-                    log.warning(mesg)
-                    yield await f_parsers.FileParser._evt_err(mesg)
+                    # mesg = f"can't parse {sha256}, no parser available for {mime}"
+                    # log.warning(mesg)
+                    # yield await f_parsers.FileParser._evt_err(mesg)
                     return
                 
                 async for evt in self.parsers[mime].parseFile(sha256, buf):

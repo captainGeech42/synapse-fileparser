@@ -78,17 +78,14 @@ class FileParser(s_base.Base):
         return {"evt": "edge", "n1": {"form": n1[0], "prim": n1[1]}, "n2": {"form": n2[0], "prim": n2[1]}, "edge": edge}
 
     @classmethod
-    async def _evt_tag(cls, tag: str, node: str | None = None) -> ParseEvent:
-        """Generate an event for adding a tag, optionally to the specified node (by default goes on the input file:bytes node)"""
+    async def _evt_tag(cls, node: Node, tag: str) -> ParseEvent:
+        """Generate an event for adding a tag"""
 
         if tag.startswith("#"):
             log.warning("removing leading # from tag: %s", tag)
             tag = tag[1:]
         
-        evt = {"evt": "tag", "tag": tag}
-        if node is not None:
-            evt["form"] = node[0]
-            evt["prim"] = node[1]
+        evt = {"evt": "tag", "form": node[0], "prim": node[1], "tag": tag}
         
         return evt
     

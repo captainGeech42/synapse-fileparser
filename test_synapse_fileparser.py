@@ -1,15 +1,18 @@
 import os
 import copy
 import asyncio
-import aiofiles
+import logging
 import binascii
 import contextlib
 
+import aiofiles
 import synapse.axon as s_axon
 import synapse.cortex as s_core
 import synapse.tests.utils as s_test
 
 import fileparser as fplib
+
+logging.getLogger().setLevel(logging.DEBUG)
 
 # HOLY GRAIL REFERENCE FOR TESTING THIS SHIT: https://github.com/vertexproject/synapse/blob/1dc3a2a4fa25537e9a4f88e6923913079ebcf77f/synapse/tests/test_lib_stormsvc.py
 
@@ -139,8 +142,9 @@ class SynapseFileparserTest(s_test.SynTest):
             # dll file modeling
             dll_sha256 = "07807083be9e8a65354e912bd9e7863997b022c210299e60ce25f6e9ddccf1ac"
             mime = await core.callStorm("[file:bytes=$s] | zw.fileparser.parse | return(:mime)", opts={"vars": {"s": dll_sha256}})
-            self.eq(mime, "application/vnd.microsoft.portable-executable")
+            self.true(mime in ["application/vnd.microsoft.portable-executable", "application/x-dosexec"]) # github actions has a different libmagic or something, this is dumb
             self.eq(await core.count("file:mime:pe:export:file=$s", opts={"vars": {"s": dll_sha256}}), 4)
+            self.eq(await core.count("file:bytes=$s +:_mime:pe:exphash=a9624d1572c8950b235070113e4f84fb8dc2104ea2537c680e4e75073505b0b2", opts={"vars": {"s": dll_sha256}}), 1)
             self.eq(await core.count("file:mime:pe:export:file=$s +:name=DllCanUnloadNow +:_address=76032 +:_ordinal=1", opts={"vars": {"s": dll_sha256}}), 1)
             self.eq(await core.count("_zw:file:mime:pe:import:file=$s", opts={"vars": {"s": dll_sha256}}), 52)
             self.eq(await core.count("_zw:file:mime:pe:import:file=$s +:name=malloc +:address=2001330396 -:ordinal", opts={"vars": {"s": dll_sha256}}), 1)
