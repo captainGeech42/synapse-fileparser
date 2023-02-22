@@ -52,8 +52,10 @@ storm> service.add test aha://00.test................
 
 # Model changes
 
+`file:mime:pe:import` is a guid instead of a comp node because an import can be by ordinal or by name. it is up to the node creator to properly disambiguate these outside of the fileparser module.
+
 ```
-file:mime:pe:import
+_zw:file:mime:pe:import
     (new form)
 
     type: file:mime:pe:import
@@ -64,12 +66,22 @@ file:mime:pe:import
     dll: str
     name: str
     address: int
+    ordinal: int
 ```
 ```  
 file:mime:pe:export
     (add props)
 
     _address: int
-    _offset: int
     _ordinal: int
+```
+```  
+file:bytes
+    (add props)
+
+    // architecture of the executable file
+    _exe:arch: str
+
+    // exphash from pefile
+    _mime:pe:exphash: str (lower | strip)
 ```

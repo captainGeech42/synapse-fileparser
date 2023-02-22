@@ -141,4 +141,7 @@ class SynapseFileparserTest(s_test.SynTest):
             mime = await core.callStorm("[file:bytes=$s] | zw.fileparser.parse | return(:mime)", opts={"vars": {"s": dll_sha256}})
             self.eq(mime, "application/vnd.microsoft.portable-executable")
             self.eq(await core.count("file:mime:pe:export:file=$s", opts={"vars": {"s": dll_sha256}}), 4)
-            self.eq(await core.count("file:mime:pe:export:file=$s +:name=DllCanUnloadNow", opts={"vars": {"s": dll_sha256}}), 1)
+            self.eq(await core.count("file:mime:pe:export:file=$s +:name=DllCanUnloadNow +:_address=76032 +:_ordinal=1", opts={"vars": {"s": dll_sha256}}), 1)
+            self.eq(await core.count("_zw:file:mime:pe:import:file=$s", opts={"vars": {"s": dll_sha256}}), 52)
+            self.eq(await core.count("_zw:file:mime:pe:import:file=$s +:name=malloc +:address=2001330396 -:ordinal", opts={"vars": {"s": dll_sha256}}), 1)
+            # TODO: test case for import by ordinal needed

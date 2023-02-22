@@ -20,5 +20,4 @@ def get_modules() -> list[f_module.StormModule]:
             .add_conf("parseq", f_consts.svc_parseq),
         f_module.StormModule("evt", "mod_evt.storm")
             .add_conf("parseq", f_consts.svc_parseq),
-        f_module.StormModule("migrate", "mod_migrate.storm"),
     ]

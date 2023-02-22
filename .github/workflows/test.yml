@@ -9,12 +9,12 @@ on:
     branches:
       - "**"
     paths:
-      - "fileparse/**"
+      - "fileparser/**"
       - "test_files/*"
       - "test_synapse_fileparser.py"
   pull_request:
     paths:
-      - "fileparse/**"
+      - "fileparser/**"
       - "test_files/*"
       - "test_synapse_fileparser.py"
   workflow_dispatch:

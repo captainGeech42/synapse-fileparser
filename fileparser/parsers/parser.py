@@ -62,11 +62,6 @@ class FileParser(s_base.Base):
     @classmethod
     async def _evt_node(cls, node: Node, props: list[tuple[str, Any]] = []) -> ParseEvent:
         """Generate an event for creating a new node"""
-        
-        # np = node.split("=", 1)
-        # form = np[0]
-        # prim = np[1]
-
         _props = []
         for (k, v) in props:
             if k.startswith(":"):
@@ -111,8 +106,6 @@ class FileParser(s_base.Base):
         evt = {"evt": "bytes", "sha256": hashlib.sha256(buf).hexdigest()}
         if name is not None:
             evt["name"] = name
-
-        # TODO: add sha256 to the parse queue for the dmon to pick up
         
         return evt
 

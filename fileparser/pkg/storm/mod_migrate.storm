@@ -1,5 +1,0 @@
-// Execute model migrations
-
-function runModelMigrations() {
-    
-}
