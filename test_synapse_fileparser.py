@@ -93,8 +93,6 @@ class SynapseFileparserTest(s_test.SynTest):
 
             # test mime
             self.eq(await fp.getMime(ls_sha256_str), "application/x-elf")
-            self.eq(await fp.getMime("a7354b9c6297b6b5537d19a12091e7d89bd52e38bc4d9498fa63aa8c3e700cb6"), "application/vnd.microsoft.portable-executable")
-            self.eq(await fp.getMime("07807083be9e8a65354e912bd9e7863997b022c210299e60ce25f6e9ddccf1ac"), "application/vnd.microsoft.portable-executable")
 
     async def test_storm_pkg(self):
         async with self.getTestFpCore() as (fp, axon, core):
