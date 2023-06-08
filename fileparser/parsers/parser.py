@@ -8,7 +8,7 @@ import synapse.telepath as s_telepath
 
 log = logging.getLogger(__name__)
 
-Node = tuple[str, any] # form->prim
+Node = tuple[str, Any] # form->prim
 ParseEvent = dict[str, Any]
 
 class FileParser(s_base.Base):

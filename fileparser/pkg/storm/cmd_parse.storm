@@ -6,6 +6,7 @@ init {
 }
 
 // TODO: user overridden mime
+// TODO: warn when bytes aren't available
 
 +file:bytes {
     [<(seen)+ {meta:source=$cmdconf.srcguid}]

@@ -1,8 +1,8 @@
-import pefile
 import logging
 import binascii
 from typing import AsyncGenerator
 
+import pefile
 import synapse.common as s_common
 
 import fileparser.parsers.parser as f_parser
@@ -10,14 +10,10 @@ import fileparser.parsers.parser as f_parser
 log = logging.getLogger(__name__)
 
 class PeParser(f_parser.FileParser):
-    # TODO: should we normalize this like ELFs?
+    # TODO: should we normalize this like ELFs? yes, yes we should
     supported_mimes = ["application/vnd.microsoft.portable-executable", "application/x-dosexec"]
 
     async def parseFile(self, sha256: str, filebytes: bytes) -> AsyncGenerator[f_parser.ParseEvent, None]:
-        import hashlib
-        if hashlib.sha256(filebytes).hexdigest() != sha256:
-            log.error("bad hash!")
-            return
         pe = pefile.PE(data=filebytes, fast_load=True)
         pe.parse_data_directories([
             pefile.DIRECTORY_ENTRY["IMAGE_DIRECTORY_ENTRY_IMPORT"],
@@ -25,7 +21,9 @@ class PeParser(f_parser.FileParser):
         ])
 
         imphash = pe.get_imphash()
-        yield await self._evt_prop(("file:bytes", sha256), "mime:pe:imphash", imphash)
+        if len(imphash) > 0:
+            yield await self._evt_prop(("file:bytes", sha256), "mime:pe:imphash", imphash)
+
         exphash = pe.get_exphash()
         if len(exphash) > 0:
             yield await self._evt_prop(("file:bytes", sha256), "_mime:pe:exphash", exphash)

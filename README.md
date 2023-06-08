@@ -16,7 +16,7 @@ $ cd /srv/syn/aha
 $ docker compose exec aha /bin/bash
 
 # in the AHA container
-python -m synapse.tools.aha.provision.service 00.test
+python -m synapse.tools.aha.provision.service 00.fileparser
 one-time use URL: ssl://aha..............
 ```
 
@@ -33,10 +33,11 @@ services:
     network_mode: host
     restart: unless-stopped
     volumes:
-        - ../testdir:/vertex/storage
+        - ./storage:/vertex/storage
     environment:
-        - SYN_EXAMPLE_HTTPS_PORT=null
-        - SYN_EXAMPLE_AHA_PROVISION=ssl://aha..................................
+        - SYN_FILEPARSER_AXON=aha://axon...
+        - SYN_FILEPARSER_HTTPS_PORT=null
+        - SYN_FILEPARSER_AHA_PROVISION=<replaceme>
 ```
 
 ```
@@ -47,10 +48,10 @@ $ docker compose up
 ## 3. Register the service in your cortex
 
 ```
-storm> service.add test aha://00.test................
+storm> service.add fileparser aha://fileparser...
 ```
 
-# Model changes
+# Model changes ([here](https://github.com/captainGeech42/synapse-fileparser/blob/main/fileparser/consts.py#L18))
 
 `file:mime:pe:import` is a guid instead of a comp node because an import can be by ordinal or by name. it is up to the node creator to properly disambiguate these outside of the fileparser module.
 
@@ -83,5 +84,5 @@ file:bytes
     _exe:arch: str
 
     // exphash from pefile
-    _mime:pe:exphash: str (lower | strip)
+    _mime:pe:exphash: hash:sha256
 ```
