@@ -1,6 +1,8 @@
 # vim:set ft=dockerfile:
 FROM vertexproject/synapse:v2.x.x
 
+RUN apt-get update && apt-get install -y -qq libmagic-dev
+
 COPY entrypoint.sh /vertex/synapse/entrypoint.sh
 
 WORKDIR /vertex

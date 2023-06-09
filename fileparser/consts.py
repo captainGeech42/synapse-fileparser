@@ -1,6 +1,6 @@
 svc_name = "zw.fileparser"
 svc_guid = "7cf0f7eeb3941bc6c3f80cf8da535e1e"
-svc_vers = (0, 0, 1)
+svc_vers = (0, 0, 2)
 svc_minvers = (2, 122, 0)
 
 svc_parseq = "zw.fileparser.parseq"
@@ -36,6 +36,15 @@ svc_evts = {
                 $lib.model.ext.addFormProp(_zw:file:mime:pe:import, name, (str, ({})), ({'doc': 'The name of the function to import.'}))
                 $lib.model.ext.addFormProp(_zw:file:mime:pe:import, ordinal, (int, ({})), ({'doc': 'The ordinal of the function to import.'}))
                 $lib.model.ext.addFormProp(_zw:file:mime:pe:import, address, (int, ({})), ({'doc': 'The address for the imported function in the source executable.'}))
+            }
+            if (not $lib.model.prop(file:subfile:_archive:mtime)) {
+                $lib.model.ext.addFormProp(file:subfile, _archive:mtime, (time, ({})), ({'doc': "The modified timestamp of the archive member. If the file format doesn't have multiple timestamps, this prop is used."}))
+            }
+            if (not $lib.model.prop(file:subfile:_archive:ctime)) {
+                $lib.model.ext.addFormProp(file:subfile, _archive:ctime, (time, ({})), ({'doc': 'The changed timestamp of the archive member.'}))
+            }
+            if (not $lib.model.prop(file:subfile:_archive:atime)) {
+                $lib.model.ext.addFormProp(file:subfile, _archive:atime, (time, ({})), ({'doc': 'The accessed timestamp of the archive member.'}))
             }
         """
             .replace("$svc_guid", svc_guid)

@@ -86,3 +86,13 @@ file:bytes
     // exphash from pefile
     _mime:pe:exphash: hash:sha256
 ```
+```
+file:subfile
+    (add props)
+
+    // timestamps from archive file formats
+    // if the container file format doesn't include all three, mtime is used
+    _archive:mtime
+    _archive:ctime
+    _archive:atime
+```
