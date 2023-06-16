@@ -90,6 +90,5 @@ class PeParser(f_parser.FileParser):
 
             bytz = sect.get_data()
             sect_hash = hashlib.sha256(bytz, usedforsecurity=False).hexdigest()
-            yield await self._evt_bytes(bytz, name=name)
 
             yield self._evt_node(("file:mime:pe:section", (sha256, name, sect_hash)))
