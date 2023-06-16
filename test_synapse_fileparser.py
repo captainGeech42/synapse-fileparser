@@ -134,6 +134,9 @@ class SynapseFileparserTest(s_test.SynTest):
             exe_sha256 = "a7354b9c6297b6b5537d19a12091e7d89bd52e38bc4d9498fa63aa8c3e700cb6"
             imphash = await core.callStorm("[file:bytes=$s] | zw.fileparser.parse | return(:mime:pe:imphash)", opts={"vars": {"s": exe_sha256}})
             self.eq(imphash, "a4dc751c02f601828a098e8da5850f7d")
+
+            self.eq(await core.count("file:bytes=$s -> file:mime:pe:section", opts={"vars": {"s": exe_sha256}}), 5)
+            self.eq(await core.count("file:bytes=$s -> file:mime:pe:section +:name='.text' +:sha256=f1f7784827e0661874fd2af5db275be022125d65eab7a6ae5f356821fea28517", opts={"vars": {"s": exe_sha256}}), 1)
     
     async def test_modeling_pe_dll(self):
         async with self.getTestFpCore() as (fp, axon, core):

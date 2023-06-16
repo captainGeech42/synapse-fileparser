@@ -1,5 +1,6 @@
 import logging
 import binascii
+import hashlib
 from typing import AsyncGenerator
 
 import pefile
@@ -20,6 +21,7 @@ class PeParser(f_parser.FileParser):
             pefile.DIRECTORY_ENTRY["IMAGE_DIRECTORY_ENTRY_EXPORT"],
         ])
 
+        # model the imphash/exphash
         imphash = pe.get_imphash()
         if len(imphash) > 0:
             yield self._evt_prop(("file:bytes", sha256), "mime:pe:imphash", imphash)
@@ -28,6 +30,7 @@ class PeParser(f_parser.FileParser):
         if len(exphash) > 0:
             yield self._evt_prop(("file:bytes", sha256), "_mime:pe:exphash", exphash)
 
+        # model the exported symbols
         try:
             for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
                 try:
@@ -44,6 +47,7 @@ class PeParser(f_parser.FileParser):
             else:
                 raise e
 
+        # model the imported symbols
         try:
             for impdll in pe.DIRECTORY_ENTRY_IMPORT:
                 try:
@@ -75,3 +79,17 @@ class PeParser(f_parser.FileParser):
                 pass
             else:
                 raise e
+            
+        # model the PE sections
+        for sect in pe.sections:
+            try:
+                name = sect.Name.rstrip(b"\x00").decode("ascii")
+            except UnicodeDecodeError:
+                log.error("error parsing %s as pe file: found an invalid section name (hex: %s)", sha256, binascii.hexlify(sect.Name).decode())
+                continue
+
+            bytz = sect.get_data()
+            sect_hash = hashlib.sha256(bytz, usedforsecurity=False).hexdigest()
+            yield await self._evt_bytes(bytz, name=name)
+
+            yield self._evt_node(("file:mime:pe:section", (sha256, name, sect_hash)))
