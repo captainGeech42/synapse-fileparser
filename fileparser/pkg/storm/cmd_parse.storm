@@ -3,6 +3,9 @@ init {
     if $cmdopts.debug { $lib.debug = $lib.true }
 
     $modevt = $lib.import(zw.fileparser.evt, debug=$lib.debug)
+
+    // make sure the meta:source node is present
+    [(meta:source=$cmdconf.srcguid :name=zw.fileparser)] | spin
 }
 
 // TODO: user overridden mime

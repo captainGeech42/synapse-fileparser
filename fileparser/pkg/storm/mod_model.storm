@@ -1,0 +1,62 @@
+// Module for handling model migrations
+
+function __migrations000() {
+    if (not $lib.model.prop(file:bytes:_exe:arch)) {
+        $lib.model.ext.addFormProp(file:bytes, _exe:arch, (str, ({'lower': $lib.true, 'strip': $lib.true})), ({'doc': 'The architecture for the executable'}))
+    }
+    if (not $lib.model.prop(file:bytes:_mime:pe:exphash)) {
+        $lib.model.ext.addFormProp(file:bytes, _mime:pe:exphash, (hash:sha256, ({})), ({'doc': 'The PE export hash of the file as calculated by pefile; https://github.com/erocarrera/pefile .'}))
+    }
+
+    if (not $lib.model.prop(file:mime:pe:export:_address)) {
+        $lib.model.ext.addFormProp(file:mime:pe:export, _address, (int, ({})), ({'doc': 'The RVA of the exported function'}))
+    }
+    if (not $lib.model.prop(file:mime:pe:export:_ordinal)) {
+        $lib.model.ext.addFormProp(file:mime:pe:export, _ordinal, (int, ({})), ({'doc': 'The ordinal of the export'}))
+    }
+
+    if (not $lib.model.form(_zw:file:mime:pe:import)) {
+        $lib.model.ext.addForm(_zw:file:mime:pe:import, guid, ({}), ({'doc': 'The fused knowledge of a file:bytes node containing a pe import.'}))
+
+        $lib.model.ext.addFormProp(_zw:file:mime:pe:import, file, (file:bytes, ({})), ({'doc': 'The file containing the import.'}))
+        $lib.model.ext.addFormProp(_zw:file:mime:pe:import, dll, (str, ({})), ({'doc': 'The DLL name to import the function from.'}))
+        $lib.model.ext.addFormProp(_zw:file:mime:pe:import, name, (str, ({})), ({'doc': 'The name of the function to import.'}))
+        $lib.model.ext.addFormProp(_zw:file:mime:pe:import, ordinal, (int, ({})), ({'doc': 'The ordinal of the function to import.'}))
+        $lib.model.ext.addFormProp(_zw:file:mime:pe:import, address, (int, ({})), ({'doc': 'The address for the imported function in the source executable.'}))
+    }
+
+    if (not $lib.model.prop(file:subfile:_archive:mtime)) {
+        $lib.model.ext.addFormProp(file:subfile, _archive:mtime, (time, ({})), ({'doc': "The modified timestamp of the archive member. If the file format doesn't have multiple timestamps, this prop is used."}))
+    }
+    if (not $lib.model.prop(file:subfile:_archive:ctime)) {
+        $lib.model.ext.addFormProp(file:subfile, _archive:ctime, (time, ({})), ({'doc': 'The changed timestamp of the archive member.'}))
+    }
+    if (not $lib.model.prop(file:subfile:_archive:atime)) {
+        $lib.model.ext.addFormProp(file:subfile, _archive:atime, (time, ({})), ({'doc': 'The accessed timestamp of the archive member.'}))
+    }
+
+    if (not $lib.model.form(_zw:file:mime:elf:segment)) {
+        $lib.model.ext.addForm(_zw:file:mime:elf:segment, guid, ({}), ({'doc': 'A region of bytes inside of an ELF binary.'}))
+
+        $lib.model.ext.addFormProp(_zw:file:mime:elf:segment, file, (file:bytes, ({})), ({'doc': 'The file containing the segment.'}))
+        $lib.model.ext.addFormProp(_zw:file:mime:elf:segment, size, (int, ({})), ({'doc': 'The raw size of the segment.'}))
+        $lib.model.ext.addFormProp(_zw:file:mime:elf:segment, disksize, (int, ({})), ({'doc': 'The size of the segment on disk, as defined by the program header.'}))
+        $lib.model.ext.addFormProp(_zw:file:mime:elf:segment, memsize, (int, ({})), ({'doc': 'The size of the segment in memory, as defined by the program header.'}))
+        $lib.model.ext.addFormProp(_zw:file:mime:elf:segment, type, (int, ({'enums': $modconf.elfphenum})), ({'doc': 'The normalized segment type.'}))
+        $lib.model.ext.addFormProp(_zw:file:mime:elf:segment, type:raw, (int, ({})), ({'doc': 'The raw segment type. For values in the OS- and processor-specific ranges, only type:raw is set.'}))
+    }
+}
+
+$__migrations = ([
+    $__migrations000,
+])
+
+function executeMigrations() {
+    $ver = $lib.globals.get($modconf.mverkey, default=0)
+
+    for $f in $__migrations.slice($ver) {
+        $f()
+    }
+
+    $lib.globals.set($modconf.mverkey, $__migrations.size())
+}

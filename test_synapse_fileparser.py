@@ -110,8 +110,6 @@ class SynapseFileparserTest(s_test.SynTest):
             mesgs = await core.stormlist("dmon.list")
             self.stormIsInPrint("zw.fileparser.parseq", mesgs)
 
-            self.assertEqual(await core.count("meta:source=$g +:name=zw.fileparser", opts={"vars": {"g": fplib.svc_guid}}), 1)
-
     async def test_modeling_metadata(self):
         async with self.getTestFpCore() as (fp, axon, core):
             fp: fplib.FileparserCell
@@ -120,10 +118,13 @@ class SynapseFileparserTest(s_test.SynTest):
 
             ls_sha256_str = "7effe56efc49e3d252a84d8173712bad05beef4def460021a1c7865247125fee"
             ls_sha256 = binascii.unhexlify(ls_sha256_str)
-            props = await core.callStorm("[file:bytes=$s] | zw.fileparser.parse | return((:size,:md5,:sha1,:sha256,:sha512, :mime))", opts={"vars": {"s": ls_sha256_str}})
+            props = await core.callStorm("[file:bytes=$s] | zw.fileparser.parse | return((:size,:md5,:sha1,:sha256,:sha512,:mime))", opts={"vars": {"s": ls_sha256_str}})
             sz = await axon.size(ls_sha256)
             hs = await axon.hashset(ls_sha256)
             self.eq(props, (sz, hs["md5"], hs["sha1"], hs["sha256"], hs["sha512"], "application/x-elf"))
+            
+            self.eq(await core.count("meta:source=$g +:name=zw.fileparser", opts={"vars": {"g": fplib.svc_guid}}), 1)
+            self.eq(await core.count("meta:source:name=zw.fileparser -(seen)> * +file:bytes=$s", opts={"vars": {"s": ls_sha256_str}}), 1)
 
     async def test_modeling_pe_exe(self):
         async with self.getTestFpCore() as (fp, axon, core):

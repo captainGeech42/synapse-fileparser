@@ -3,6 +3,7 @@
 import fileparser.pkg.cmd as f_cmd
 import fileparser.pkg.module as f_module
 import fileparser.consts as f_consts
+import fileparser.lookup as f_lookup
 
 def get_commands() -> list[f_cmd.StormCommand]:
     forms = [
@@ -20,4 +21,7 @@ def get_modules() -> list[f_module.StormModule]:
             .add_conf("parseq", f_consts.svc_parseq),
         f_module.StormModule("evt", "mod_evt.storm")
             .add_conf("parseq", f_consts.svc_parseq),
+        f_module.StormModule("model", "mod_model.storm")
+            .add_conf("mverkey", f_consts.svc_migrationkey)
+            .add_conf("elfphenum", f_lookup.getElfPhTypeTuple())
     ]

@@ -9,6 +9,7 @@ def get_pkgs():
             "name": f_consts.svc_name,
             "version": f_consts.svc_vers,
             "synapse_minversion": f_consts.svc_minvers,
+            "onload": f_consts.svc_onload,
             "modules": [x.export() for x in f_defs.get_modules()],
             "commands": [x.export() for x in f_defs.get_commands()],
         },

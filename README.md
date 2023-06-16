@@ -53,46 +53,69 @@ storm> service.add fileparser aha://fileparser...
 
 # Model changes ([here](https://github.com/captainGeech42/synapse-fileparser/blob/main/fileparser/consts.py#L18))
 
+## New Forms
+
+### `file:mime:pe:import`
+
 `file:mime:pe:import` is a guid instead of a comp node because an import can be by ordinal or by name. it is up to the node creator to properly disambiguate these outside of the fileparser module.
 
 ```
-_zw:file:mime:pe:import
-    (new form)
-
-    type: file:mime:pe:import
-    base: guid
-    doc: The fused knowledge of a file:bytes node containing a pe import.
+type: file:mime:pe:import
+base: guid
+doc: The fused knowledge of a file:bytes node containing a pe import.
     
-    file: file:bytes
-    dll: str
-    name: str
-    address: int
-    ordinal: int
+file: file:bytes
+dll: str
+name: str
+address: int
+ordinal: int
 ```
+
+### `file:mime:elf:segment`
+
+```
+type: file:mime:elf:segment
+base: guid
+doc: The fused knowledge of a file:bytes node containing an elf segment.
+
+file: file:bytes
+type: enum
+type:raw: int
+disksize: int
+memsize: int
+size: int
+```
+
+### `file:meme:elf:section`
+
+```
+```
+
+## Modified Forms
+
+### `file:mime:pe:export`
+
 ```  
-file:mime:pe:export
-    (add props)
-
-    _address: int
-    _ordinal: int
+_address: int
+_ordinal: int
 ```
+
+### `file:bytes`
+
 ```  
-file:bytes
-    (add props)
+// architecture of the executable file
+_exe:arch: str
 
-    // architecture of the executable file
-    _exe:arch: str
-
-    // exphash from pefile
-    _mime:pe:exphash: hash:sha256
+// exphash from pefile
+_mime:pe:exphash: hash:sha256
 ```
-```
-file:subfile
-    (add props)
 
-    // timestamps from archive file formats
-    // if the container file format doesn't include all three, mtime is used
-    _archive:mtime
-    _archive:ctime
-    _archive:atime
+### `file:sufile`
+
+```
+// timestamps from archive file formats
+// if the container file format doesn't include all three, mtime is used
+_archive:mtime
+_archive:ctime
+_archive:atime
 ```
