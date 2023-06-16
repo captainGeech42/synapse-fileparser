@@ -122,7 +122,7 @@ _exe:arch: str
 _mime:pe:exphash: hash:sha256
 ```
 
-### `file:sufile`
+### `file:subfile`
 
 ```
 // timestamps from archive file formats
