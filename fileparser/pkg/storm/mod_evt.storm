@@ -9,7 +9,7 @@ function handleEvt(evt) {
         node: {
             [(*$evt.form=$evt.prim <(seen)+ {meta:source=$modconf.srcguid})]
             for $prop in $evt.props {
-                [(*$evt.form=$evt.prim :$prop.0=$prop.1)]
+                [(*$evt.form=$evt.prim :$prop.0?=$prop.1)]
             }
         }
         edge: {

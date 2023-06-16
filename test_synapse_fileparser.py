@@ -178,3 +178,19 @@ class SynapseFileparserTest(s_test.SynTest):
             # self.eq(await core.callStorm("file:subfile=('sha256:b74bc4edea0842b3b2f621b4dda553acf277198f3dc744e581e00141ad681ef3', 'sha256:07b40aacf7008293c886033acac0b9c0ab4d6cef3f4ed66944b61d96a81575e8') +:path=pics/perfection.png return(:_archive:mtime)"), 1)
             # self.eq(await core.count("file:bytes=$s -> file:subfile +:_archive:mtime -:_archive:ctime -:_archive:atime :child -> file:bytes +:name +:mime", opts={"vars": {"s": zip_sha256}}), 3)
             # self.eq(await core.count("file:bytes=$s -> file:subfile +:_archive:mtime=$t :child -> file:bytes +:name=perfection.png +:mime=image/png", opts={"vars": {"s": zip_sha256, "t": 1676206710000}}), 1) # 1676188710000
+
+    async def test_modeling_elf(self):
+        async with self.getTestFpCore() as (fp, axon, core):
+            fp: fplib.FileparserCell
+            axon: s_axon.AxonApi
+            core: s_core.Cortex
+
+            ls_sha256 = "7effe56efc49e3d252a84d8173712bad05beef4def460021a1c7865247125fee"
+            self.eq(await core.count("[file:bytes=$s] | zw.fileparser.parse", opts={"vars": {"s": ls_sha256}}), 1)
+
+            self.eq(await core.count("file:bytes=$s -> _zw:file:mime:elf:segment", opts={"vars": {"s": ls_sha256}}), 13)
+            self.eq(await core.count("file:bytes=$s -> _zw:file:mime:elf:segment -> _zw:file:mime:elf:section", opts={"vars": {"s": ls_sha256}}), 23)
+
+            self.eq(await core.callStorm("file:bytes=$s -> _zw:file:mime:elf:segment +:disksize=80273 return ((:hash,:memsize,:size,:type,:type:raw))", opts={"vars": {"s": ls_sha256}}), ("aa1952d71027827a269a56fd57db55878da4950e2bd067afc9fb119292edfcfb", 80273, 80273, 1, 1))
+            
+            self.eq(await core.callStorm("file:bytes=$s -> _zw:file:mime:elf:segment -> _zw:file:mime:elf:section +:name='.text' return ((:segment,:hash,:size,:offset,:type,:type:raw))", opts={"vars": {"s": ls_sha256}}), ("46ef0c957dfc0814761fe28ce2457783", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", 80227, 16416, 1, 1))

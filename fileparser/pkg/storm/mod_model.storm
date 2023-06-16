@@ -36,14 +36,27 @@ function __migrations000() {
     }
 
     if (not $lib.model.form(_zw:file:mime:elf:segment)) {
-        $lib.model.ext.addForm(_zw:file:mime:elf:segment, guid, ({}), ({'doc': 'A region of bytes inside of an ELF binary.'}))
+        $lib.model.ext.addForm(_zw:file:mime:elf:segment, guid, ({}), ({'doc': 'A delineated region of bytes inside of an ELF binary.'}))
 
         $lib.model.ext.addFormProp(_zw:file:mime:elf:segment, file, (file:bytes, ({})), ({'doc': 'The file containing the segment.'}))
+        $lib.model.ext.addFormProp(_zw:file:mime:elf:segment, hash, (hash:sha256, ({})), ({'doc': 'The sha256 hash of the segment.'}))
         $lib.model.ext.addFormProp(_zw:file:mime:elf:segment, size, (int, ({})), ({'doc': 'The raw size of the segment.'}))
         $lib.model.ext.addFormProp(_zw:file:mime:elf:segment, disksize, (int, ({})), ({'doc': 'The size of the segment on disk, as defined by the program header.'}))
         $lib.model.ext.addFormProp(_zw:file:mime:elf:segment, memsize, (int, ({})), ({'doc': 'The size of the segment in memory, as defined by the program header.'}))
         $lib.model.ext.addFormProp(_zw:file:mime:elf:segment, type, (int, ({'enums': $modconf.elfphenum})), ({'doc': 'The normalized segment type.'}))
         $lib.model.ext.addFormProp(_zw:file:mime:elf:segment, type:raw, (int, ({})), ({'doc': 'The raw segment type. For values in the OS- and processor-specific ranges, only type:raw is set.'}))
+    }
+    
+    if (not $lib.model.form(_zw:file:mime:elf:section)) {
+        $lib.model.ext.addForm(_zw:file:mime:elf:section, guid, ({}), ({'doc': 'A section inside a ELF binary denoting a named region of bytes inside a segment.'}))
+
+        $lib.model.ext.addFormProp(_zw:file:mime:elf:section, segment, (_zw:file:mime:elf:segment, ({})), ({'doc': 'The ELF segment that contains this section.'}))
+        $lib.model.ext.addFormProp(_zw:file:mime:elf:section, hash, (hash:sha256, ({})), ({'doc': 'The sha256 hash of the section.'}))
+        $lib.model.ext.addFormProp(_zw:file:mime:elf:section, size, (int, ({})), ({'doc': 'The size of the section.'}))
+        $lib.model.ext.addFormProp(_zw:file:mime:elf:section, name, (str, ({})), ({'doc': 'The name of the section.'}))
+        $lib.model.ext.addFormProp(_zw:file:mime:elf:section, offset, (int, ({})), ({'doc': 'The file offset to the beginning of the section.'}))
+        $lib.model.ext.addFormProp(_zw:file:mime:elf:section, type, (int, ({'enums': $modconf.elfshenum})), ({'doc': 'The normalized section type.'}))
+        $lib.model.ext.addFormProp(_zw:file:mime:elf:section, type:raw, (int, ({})), ({'doc': 'The raw section type. For values in the OS-specific range, only type:raw is set.'}))
     }
 }
 

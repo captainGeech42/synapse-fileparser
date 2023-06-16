@@ -8,7 +8,7 @@ def get_parsers() -> list[Type[FileParser]]:
     import fileparser.parsers.zip
 
     return [
-        # fileparser.parsers.elf.ElfParser,
+        fileparser.parsers.elf.ElfParser,
         fileparser.parsers.pe.PeParser,
         fileparser.parsers.zip.ZipParser
     ]

@@ -51,16 +51,14 @@ $ docker compose up
 storm> service.add fileparser aha://fileparser...
 ```
 
-# Model changes ([here](https://github.com/captainGeech42/synapse-fileparser/blob/main/fileparser/consts.py#L18))
+# Model changes ([here](/fileparser/pkg/storm/mod_model.storm))
 
 ## New Forms
 
-### `file:mime:pe:import`
-
-`file:mime:pe:import` is a guid instead of a comp node because an import can be by ordinal or by name. it is up to the node creator to properly disambiguate these outside of the fileparser module.
+### `_zw:file:mime:pe:import`
 
 ```
-type: file:mime:pe:import
+type: _zw:file:mime:pe:import
 base: guid
 doc: The fused knowledge of a file:bytes node containing a pe import.
     
@@ -71,14 +69,17 @@ address: int
 ordinal: int
 ```
 
-### `file:mime:elf:segment`
+### `_zw:file:mime:elf:segment`
+
+Both this form and the corresponding section form are designed similarly to their corresponding Mach-O forms.
 
 ```
-type: file:mime:elf:segment
+type: _zw:file:mime:elf:segment
 base: guid
-doc: The fused knowledge of a file:bytes node containing an elf segment.
+doc: A delineated region of bytes inside of an ELF binary.
 
 file: file:bytes
+hash: hash:sha256
 type: enum
 type:raw: int
 disksize: int
@@ -86,9 +87,20 @@ memsize: int
 size: int
 ```
 
-### `file:meme:elf:section`
+### `_zw:file:meme:elf:section`
 
 ```
+type: _zw:file:mime:elf:section
+base: guid
+doc: A section inside a ELF binary denoting a named region of bytes inside a segment.
+
+segment: _zw:file:mime:elf:segment
+hash: hash:sha256
+size: int
+name: str
+offset: int
+type: enum
+type:raw: int
 ```
 
 ## Modified Forms
