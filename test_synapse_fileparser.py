@@ -27,6 +27,9 @@ class SynapseFileparserTest(s_test.SynTest):
         conf = copy.deepcopy(conf)
 
         async with self.getTestAxon() as axon:
+            # upload the test files
+            await self._t_uploadTestFiles(axon)
+
             if "axon" not in conf:
                 conf["axon"] = axon.getLocalUrl()
             with self.withNexusReplay():
@@ -50,6 +53,9 @@ class SynapseFileparserTest(s_test.SynTest):
 
                 # wait for the service to finish initialization
                 await core.nodes("$lib.service.wait(fileparser)")
+            
+                # upload the test files
+                await self._t_uploadTestFiles(axon)
 
                 yield (fp, axon, core)
 
@@ -78,8 +84,6 @@ class SynapseFileparserTest(s_test.SynTest):
             fp: fplib.FileparserCell
             axon: s_axon.AxonApi
 
-            await self._t_uploadTestFiles(axon)
-            
             # test size
             ls_sha256_str = "7effe56efc49e3d252a84d8173712bad05beef4def460021a1c7865247125fee"
             ls_sha256 = binascii.unhexlify(ls_sha256_str)
@@ -108,9 +112,12 @@ class SynapseFileparserTest(s_test.SynTest):
 
             self.assertEqual(await core.count("meta:source=$g +:name=zw.fileparser", opts={"vars": {"g": fplib.svc_guid}}), 1)
 
-            await self._t_uploadTestFiles(axon)
+    async def test_modeling_metadata(self):
+        async with self.getTestFpCore() as (fp, axon, core):
+            fp: fplib.FileparserCell
+            axon: s_axon.AxonApi
+            core: s_core.Cortex
 
-            # basic metadata modeling
             ls_sha256_str = "7effe56efc49e3d252a84d8173712bad05beef4def460021a1c7865247125fee"
             ls_sha256 = binascii.unhexlify(ls_sha256_str)
             props = await core.callStorm("[file:bytes=$s] | zw.fileparser.parse | return((:size,:md5,:sha1,:sha256,:sha512, :mime))", opts={"vars": {"s": ls_sha256_str}})
@@ -118,12 +125,38 @@ class SynapseFileparserTest(s_test.SynTest):
             hs = await axon.hashset(ls_sha256)
             self.eq(props, (sz, hs["md5"], hs["sha1"], hs["sha256"], hs["sha512"], "application/x-elf"))
 
-            # exe file modeling
+    async def test_modeling_pe_exe(self):
+        async with self.getTestFpCore() as (fp, axon, core):
+            fp: fplib.FileparserCell
+            axon: s_axon.AxonApi
+            core: s_core.Cortex
+
             exe_sha256 = "a7354b9c6297b6b5537d19a12091e7d89bd52e38bc4d9498fa63aa8c3e700cb6"
             imphash = await core.callStorm("[file:bytes=$s] | zw.fileparser.parse | return(:mime:pe:imphash)", opts={"vars": {"s": exe_sha256}})
             self.eq(imphash, "a4dc751c02f601828a098e8da5850f7d")
+    
+    async def test_modeling_pe_dll(self):
+        async with self.getTestFpCore() as (fp, axon, core):
+            fp: fplib.FileparserCell
+            axon: s_axon.AxonApi
+            core: s_core.Cortex
 
-            # zip file modeling
+            dll_sha256 = "07807083be9e8a65354e912bd9e7863997b022c210299e60ce25f6e9ddccf1ac"
+            mime = await core.callStorm("[file:bytes=$s] | zw.fileparser.parse | return(:mime)", opts={"vars": {"s": dll_sha256}})
+            self.true(mime in ["application/vnd.microsoft.portable-executable", "application/x-dosexec"]) # github actions has a different libmagic or something, this is dumb
+            self.eq(await core.count("file:mime:pe:export:file=$s", opts={"vars": {"s": dll_sha256}}), 4)
+            self.eq(await core.count("file:bytes=$s +:_mime:pe:exphash=a9624d1572c8950b235070113e4f84fb8dc2104ea2537c680e4e75073505b0b2", opts={"vars": {"s": dll_sha256}}), 1)
+            self.eq(await core.count("file:mime:pe:export:file=$s +:name=DllCanUnloadNow +:_address=76032 +:_ordinal=1", opts={"vars": {"s": dll_sha256}}), 1)
+            self.eq(await core.count("_zw:file:mime:pe:import:file=$s", opts={"vars": {"s": dll_sha256}}), 52)
+            self.eq(await core.count("_zw:file:mime:pe:import:file=$s +:name=malloc +:address=2001330396 -:ordinal", opts={"vars": {"s": dll_sha256}}), 1)
+            # TODO: test case for import by ordinal needed
+    
+    async def test_modeling_zip(self):
+        async with self.getTestFpCore() as (fp, axon, core):
+            fp: fplib.FileparserCell
+            axon: s_axon.AxonApi
+            core: s_core.Cortex
+
             zip_sha256 = "b74bc4edea0842b3b2f621b4dda553acf277198f3dc744e581e00141ad681ef3"
             mime = await core.callStorm("[file:bytes=$s] | zw.fileparser.parse | +{<(seen)- meta:source:name=zw.fileparser} return (:mime)", opts={"vars": {"s": zip_sha256}})
             self.eq(mime, "application/zip")
@@ -141,14 +174,3 @@ class SynapseFileparserTest(s_test.SynTest):
             # self.eq(await core.callStorm("file:subfile=('sha256:b74bc4edea0842b3b2f621b4dda553acf277198f3dc744e581e00141ad681ef3', 'sha256:07b40aacf7008293c886033acac0b9c0ab4d6cef3f4ed66944b61d96a81575e8') +:path=pics/perfection.png return(:_archive:mtime)"), 1)
             # self.eq(await core.count("file:bytes=$s -> file:subfile +:_archive:mtime -:_archive:ctime -:_archive:atime :child -> file:bytes +:name +:mime", opts={"vars": {"s": zip_sha256}}), 3)
             # self.eq(await core.count("file:bytes=$s -> file:subfile +:_archive:mtime=$t :child -> file:bytes +:name=perfection.png +:mime=image/png", opts={"vars": {"s": zip_sha256, "t": 1676206710000}}), 1) # 1676188710000
-
-            # dll file modeling
-            dll_sha256 = "07807083be9e8a65354e912bd9e7863997b022c210299e60ce25f6e9ddccf1ac"
-            mime = await core.callStorm("[file:bytes=$s] | zw.fileparser.parse | return(:mime)", opts={"vars": {"s": dll_sha256}})
-            self.true(mime in ["application/vnd.microsoft.portable-executable", "application/x-dosexec"]) # github actions has a different libmagic or something, this is dumb
-            self.eq(await core.count("file:mime:pe:export:file=$s", opts={"vars": {"s": dll_sha256}}), 4)
-            self.eq(await core.count("file:bytes=$s +:_mime:pe:exphash=a9624d1572c8950b235070113e4f84fb8dc2104ea2537c680e4e75073505b0b2", opts={"vars": {"s": dll_sha256}}), 1)
-            self.eq(await core.count("file:mime:pe:export:file=$s +:name=DllCanUnloadNow +:_address=76032 +:_ordinal=1", opts={"vars": {"s": dll_sha256}}), 1)
-            self.eq(await core.count("_zw:file:mime:pe:import:file=$s", opts={"vars": {"s": dll_sha256}}), 52)
-            self.eq(await core.count("_zw:file:mime:pe:import:file=$s +:name=malloc +:address=2001330396 -:ordinal", opts={"vars": {"s": dll_sha256}}), 1)
-            # TODO: test case for import by ordinal needed
