@@ -22,11 +22,11 @@ class PeParser(f_parser.FileParser):
 
         imphash = pe.get_imphash()
         if len(imphash) > 0:
-            yield await self._evt_prop(("file:bytes", sha256), "mime:pe:imphash", imphash)
+            yield self._evt_prop(("file:bytes", sha256), "mime:pe:imphash", imphash)
 
         exphash = pe.get_exphash()
         if len(exphash) > 0:
-            yield await self._evt_prop(("file:bytes", sha256), "_mime:pe:exphash", exphash)
+            yield self._evt_prop(("file:bytes", sha256), "_mime:pe:exphash", exphash)
 
         try:
             for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
@@ -36,7 +36,7 @@ class PeParser(f_parser.FileParser):
                     log.error("error parsing %s as pe file: export directory contained an invalid symbol name (hex: %s)", sha256, binascii.hexlify(exp.name).decode())
                     continue
 
-                yield await self._evt_node(("file:mime:pe:export", (sha256,name)), [("_address", exp.address), ("_ordinal", exp.ordinal)])
+                yield self._evt_node(("file:mime:pe:export", (sha256,name)), [("_address", exp.address), ("_ordinal", exp.ordinal)])
         except AttributeError as e:
             if e.name == "DIRECTORY_ENTRY_EXPORT":
                 log.debug("no export directory for %s", sha256)
@@ -68,7 +68,7 @@ class PeParser(f_parser.FileParser):
                             continue
                         props["name"] = name
 
-                    yield await self._evt_node(("_zw:file:mime:pe:import", s_common.guid(props)), [(k,v) for k, v in props.items()])
+                    yield self._evt_node(("_zw:file:mime:pe:import", s_common.guid(props)), [(k,v) for k, v in props.items()])
         except AttributeError as e:
             if e.name == "DIRECTORY_ENTRY_IMPORT":
                 log.debug("no import directory for %s", sha256)

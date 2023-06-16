@@ -25,7 +25,7 @@ class ZipParser(f_parser.FileParser):
                 mtime = int(datetime(*f.date_time).timestamp() * 1000)
 
                 yield await self._evt_bytes(buf, basename)
-                yield await self._evt_node(("file:subfile", (sha256,child_sha256)), [("path", f.filename)])
+                yield self._evt_node(("file:subfile", (sha256,child_sha256)), [("path", f.filename)])
 
                 # disabled per #1
                 # yield await self._evt_node(("file:subfile", (sha256,child_sha256)), [("path", f.filename), ("_archive:mtime", mtime)])

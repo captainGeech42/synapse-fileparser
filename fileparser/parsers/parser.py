@@ -44,7 +44,7 @@ class FileParser(s_base.Base):
                 return await axon.put(evt[1].get("bytes"))
 
     @classmethod
-    async def _evt_prop(cls, node: Node, prop: str, value: Any) -> ParseEvent:
+    def _evt_prop(cls, node: Node, prop: str, value: Any) -> ParseEvent:
         """Generate an event for setting a property, optionally to the specified node (by default goes on the input file:bytes node)"""
 
         if prop.startswith(":"):
@@ -60,8 +60,9 @@ class FileParser(s_base.Base):
         return evt
     
     @classmethod
-    async def _evt_node(cls, node: Node, props: list[tuple[str, Any]] = []) -> ParseEvent:
+    def _evt_node(cls, node: Node, props: list[tuple[str, Any]] = []) -> ParseEvent:
         """Generate an event for creating a new node"""
+
         _props = []
         for (k, v) in props:
             if k.startswith(":"):
@@ -72,13 +73,13 @@ class FileParser(s_base.Base):
         return {"evt": "node", "form": node[0], "prim": node[1], "props": _props}
 
     @classmethod
-    async def _evt_edge(cls, n1: Node, n2: Node, edge: str) -> ParseEvent:
+    def _evt_edge(cls, n1: Node, n2: Node, edge: str) -> ParseEvent:
         """Generate an event for creating a lightweight edge"""
 
         return {"evt": "edge", "n1": {"form": n1[0], "prim": n1[1]}, "n2": {"form": n2[0], "prim": n2[1]}, "edge": edge}
 
     @classmethod
-    async def _evt_tag(cls, node: Node, tag: str) -> ParseEvent:
+    def _evt_tag(cls, node: Node, tag: str) -> ParseEvent:
         """Generate an event for adding a tag"""
 
         if tag.startswith("#"):
@@ -90,7 +91,7 @@ class FileParser(s_base.Base):
         return evt
     
     @classmethod
-    async def _evt_err(cls, mesg: str) -> ParseEvent:
+    def _evt_err(cls, mesg: str) -> ParseEvent:
         """Generate an event for an error that occurred during parsing"""
 
         return {"evt": "err", "mesg": mesg}
