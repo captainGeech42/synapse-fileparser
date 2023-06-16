@@ -147,7 +147,7 @@ class SynapseFileparserTest(s_test.SynTest):
 
             dll_sha256 = "07807083be9e8a65354e912bd9e7863997b022c210299e60ce25f6e9ddccf1ac"
             mime = await core.callStorm("[file:bytes=$s] | zw.fileparser.parse | return(:mime)", opts={"vars": {"s": dll_sha256}})
-            self.true(mime in ["application/vnd.microsoft.portable-executable", "application/x-dosexec"]) # github actions has a different libmagic or something, this is dumb
+            self.eq(mime, "application/vnd.microsoft.portable-executable")
             self.eq(await core.count("file:mime:pe:export:file=$s", opts={"vars": {"s": dll_sha256}}), 4)
             self.eq(await core.count("file:bytes=$s +:_mime:pe:exphash=a9624d1572c8950b235070113e4f84fb8dc2104ea2537c680e4e75073505b0b2", opts={"vars": {"s": dll_sha256}}), 1)
             self.eq(await core.count("file:mime:pe:export:file=$s +:name=DllCanUnloadNow +:_address=76032 +:_ordinal=1", opts={"vars": {"s": dll_sha256}}), 1)

@@ -1,3 +1,4 @@
+import struct
 import logging
 import binascii
 from typing import AsyncIterator
@@ -60,6 +61,11 @@ class FileparserCell(s_cell.Cell):
         # libmagic does some wack stuff on elfs, and the enterprise fileparser seems to standardize these
         if buf[:4] == b"\x7fELF":
             return "application/x-elf"
+    
+        if buf[:2] == b"MZ":
+            pe_off = struct.unpack("<I", buf[0x3c:0x40])[0]
+            if buf[pe_off:pe_off+4] == b"PE\x00\x00":
+                return "application/vnd.microsoft.portable-executable"
 
         return magic.from_buffer(buf, mime=True)
 
