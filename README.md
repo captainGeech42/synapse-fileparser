@@ -87,7 +87,7 @@ memsize: int
 size: int
 ```
 
-### `_zw:file:meme:elf:section`
+### `_zw:file:mime:elf:section`
 
 ```
 type: _zw:file:mime:elf:section
