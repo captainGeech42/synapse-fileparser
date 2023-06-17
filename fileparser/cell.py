@@ -76,17 +76,22 @@ class FileparserCell(s_cell.Cell):
         async with s_telepath.withTeleEnv():
             async with await s_telepath.openurl(self.axon_url) as axon:
                 axon: s_axon.AxonApi
-                sz = await axon.size(binascii.unhexlify(sha256))
+                try:
+                    return await axon.size(binascii.unhexlify(sha256))
+                except s_exc.NoSuchFile:
+                    return None
 
-                return sz
-
-    async def getHashes(self, sha256: str) -> dict[str, str]:
-        """Get the various file hashes from the Axon API. Returns a dict"""
+    async def getHashes(self, sha256: str) -> dict[str, str] | None:
+        """Get the various file hashes from the Axon API. Returns a dict, or None if no bytes available."""
 
         async with s_telepath.withTeleEnv():
             async with await s_telepath.openurl(self.axon_url) as axon:
                 axon: s_axon.AxonApi
-                return await axon.hashset(binascii.unhexlify(sha256))
+
+                try:
+                    return await axon.hashset(binascii.unhexlify(sha256))
+                except s_exc.NoSuchFile:
+                    return None
     
     async def getMime(self, sha256: str) -> str | None:
         """Detect the proper MIME type for the file"""
@@ -97,12 +102,18 @@ class FileparserCell(s_cell.Cell):
 
                 buf = b""
                 # not all axon implementations support the partial read
-                async for bytz in axon.get(binascii.unhexlify(sha256)):
-                    buf += bytz
-                    if len(buf) >= 4096:
-                        break
+                try:
+                    async for bytz in axon.get(binascii.unhexlify(sha256)):
+                        buf += bytz
+                        if len(buf) >= 4096:
+                            break
+                except s_exc.NoSuchFile:
+                    return None
 
-                return self._getMime(buf)
+                if len(buf) > 0:
+                    return self._getMime(buf)
+                else:
+                    return None
     
     async def parseFile(self, sha256: str, mime: str | None = None) -> AsyncIterator[f_parsers.ParseEvent]:
         """Parse a file according to the detected or specified MIME type"""
@@ -114,8 +125,12 @@ class FileparserCell(s_cell.Cell):
                 axon: s_axon.AxonApi
 
                 buf = b""
-                async for bytz in axon.get(binascii.unhexlify(sha256)):
-                    buf += bytz
+                try:
+                    async for bytz in axon.get(binascii.unhexlify(sha256)):
+                        buf += bytz
+                except s_exc.NoSuchFile:
+                    yield f_parsers.FileParser._evt_err(f"no bytes available for {sha256}")
+                    return
                 
                 if mime is None:
                     mime = self._getMime(buf)

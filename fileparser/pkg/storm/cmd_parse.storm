@@ -8,8 +8,6 @@ init {
     [(meta:source=$cmdconf.srcguid :name=zw.fileparser)] | spin
 }
 
-// TODO: warn when bytes aren't available
-
 +file:bytes {
     [<(seen)+ {meta:source=$cmdconf.srcguid}]
     
