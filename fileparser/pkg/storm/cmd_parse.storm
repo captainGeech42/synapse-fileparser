@@ -8,7 +8,6 @@ init {
     [(meta:source=$cmdconf.srcguid :name=zw.fileparser)] | spin
 }
 
-// TODO: user overridden mime
 // TODO: warn when bytes aren't available
 
 +file:bytes {
@@ -20,10 +19,14 @@ init {
     $hashes = $svc.getHashes(:sha256)
     if $hashes {[:md5=$hashes.md5 :sha1=$hashes.sha1 :sha256=$hashes.sha256 :sha512=$hashes.sha512]}
 
-    $mime = $svc.getMime(:sha256)
-    if $mime {[:mime=$mime] {[(file:ismime=($node,$mime) <(seen)+ {meta:source=$cmdconf.srcguid})]} }
+    if (not :mime) {
+        $mime = $svc.getMime(:sha256)
+        if $mime {
+            [:mime=$mime] {[(file:ismime=($node,$mime) <(seen)+ {meta:source=$cmdconf.srcguid})]}
+        }
+    }
 
-    for $evt in $svc.parseFile(:sha256) {
+    for $evt in $svc.parseFile(:sha256, :mime) {
         yield $modevt.handleEvt($evt)
     }
 }

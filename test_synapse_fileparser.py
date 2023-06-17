@@ -110,6 +110,12 @@ class SynapseFileparserTest(s_test.SynTest):
             mesgs = await core.stormlist("dmon.list")
             self.stormIsInPrint("zw.fileparser.parseq", mesgs)
 
+            # make sure overriding the mime is carried through on the parsing
+            hash = "a7354b9c6297b6b5537d19a12091e7d89bd52e38bc4d9498fa63aa8c3e700cb6"
+            await core.callStorm("[file:bytes=$h :mime='text/plain']", opts={"vars": {"h": hash}})
+            await core.callStorm("file:bytes=$h | zw.fileparser.parse", opts={"vars": {"h": hash}})
+            self.eq(await core.callStorm("file:bytes=$h return((:mime,:mime:pe:imphash))", opts={"vars": {"h": hash}}), ("text/plain", None))
+
     async def test_modeling_metadata(self):
         async with self.getTestFpCore() as (fp, axon, core):
             fp: fplib.FileparserCell

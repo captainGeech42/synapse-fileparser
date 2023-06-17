@@ -1,6 +1,10 @@
 # synapse-fileparser
 Synapse Advanced Power-up to parse files because I don't have enterprise ;(
 
+# Usage
+
+To parse a file, use `zw.fileparser.parse`. Any input files that have a `:mime` property set will be parsed according to that MIME, otherwise a MIME will be auto-detected and set on the node.
+
 # Permissions
 
 This package exposes one permission level:
