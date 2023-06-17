@@ -154,6 +154,12 @@ class SynapseFileparserTest(s_test.SynTest):
             self.eq(await core.count("_zw:file:mime:pe:import:file=$s", opts={"vars": {"s": dll_sha256}}), 52)
             self.eq(await core.count("_zw:file:mime:pe:import:file=$s +:name=malloc +:address=2001330396 -:ordinal", opts={"vars": {"s": dll_sha256}}), 1)
             # TODO: test case for import by ordinal needed
+
+            self.eq(await core.callStorm("file:bytes=$s return((:mime:pe:compiled,:mime:pe:exports:time,:_mime:pe:debug:time))", opts={"vars": {"s": dll_sha256}}), (3284065492000, 3284065492000, 3284065492000))
+            self.eq(await core.callStorm("file:bytes=$s return(:mime:pe:pdbpath)", opts={"vars": {"s": dll_sha256}}), "dmsynth.pdb")
+            self.eq(await core.callStorm("file:bytes=$s return(:mime:pe:richhdr)", opts={"vars": {"s": dll_sha256}}), "e20cbd6f1b1ae12487a97f6ac1017d5f57bebd11f229c47c091dea79a36d220c")
+            self.eq(await core.callStorm("file:bytes=$s return(:mime:pe:size)", opts={"vars": {"s": dll_sha256}}), 135168)
+
     
     async def test_modeling_zip(self):
         async with self.getTestFpCore() as (fp, axon, core):

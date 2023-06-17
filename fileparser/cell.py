@@ -1,6 +1,7 @@
 import struct
 import logging
 import binascii
+import traceback
 from typing import AsyncIterator
 
 import magic
@@ -125,7 +126,10 @@ class FileparserCell(s_cell.Cell):
                     # yield await f_parsers.FileParser._evt_err(mesg)
                     return
                 
-                async for evt in self.parsers[mime].parseFile(sha256, buf):
-                    if evt is None:
-                        return
-                    yield evt
+                try:
+                    async for evt in self.parsers[mime].parseFile(sha256, buf):
+                        if evt is None:
+                            return
+                        yield evt
+                except Exception as e:
+                    yield f_parsers.FileParser._evt_err(f"unhandled error when parsing {sha256}: {traceback.format_exc()}")

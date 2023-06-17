@@ -79,9 +79,16 @@ function __migrations001() {
     }
 }
 
+function __migrations002() {
+    if (not $lib.model.prop(file:bytes:_mime:pe:debug:time)) {
+        $lib.model.ext.addFormProp(file:bytes, _mime:pe:debug:time, (time, ({})), ({'doc': 'The debug time of the file according to the PE.'}))
+    }
+}
+
 $__migrations = ([
     $__migrations000,
     $__migrations001,
+    $__migrations002,
 ])
 
 function executeMigrations() {

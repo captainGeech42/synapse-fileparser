@@ -27,7 +27,7 @@ Create a `docker-compose.yml` file:
 ```yaml
 version: "3.3"
 services:
-  00.test:
+  00.fileparser:
     user: "999"
     image: synapse-fileparser
     network_mode: host

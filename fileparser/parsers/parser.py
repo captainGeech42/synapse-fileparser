@@ -94,6 +94,8 @@ class FileParser(s_base.Base):
     def _evt_err(cls, mesg: str) -> ParseEvent:
         """Generate an event for an error that occurred during parsing"""
 
+        log.warning(mesg)
+
         return {"evt": "err", "mesg": mesg}
     
     async def _evt_bytes(self, buf: bytes, name: str | None = None) -> ParseEvent:
