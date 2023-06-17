@@ -116,15 +116,15 @@ class SynapseFileparserTest(s_test.SynTest):
             axon: s_axon.AxonApi
             core: s_core.Cortex
 
-            ls_sha256_str = "7effe56efc49e3d252a84d8173712bad05beef4def460021a1c7865247125fee"
-            ls_sha256 = binascii.unhexlify(ls_sha256_str)
-            props = await core.callStorm("[file:bytes=$s] | zw.fileparser.parse | return((:size,:md5,:sha1,:sha256,:sha512,:mime))", opts={"vars": {"s": ls_sha256_str}})
-            sz = await axon.size(ls_sha256)
-            hs = await axon.hashset(ls_sha256)
-            self.eq(props, (sz, hs["md5"], hs["sha1"], hs["sha256"], hs["sha512"], "application/x-elf"))
+            sha256_str = "3ccef83023c34c3c6b7346deb095e5def257ba70900c74e2e676cbe001bc7a51"
+            sha256 = binascii.unhexlify(sha256_str)
+            props = await core.callStorm("[file:bytes=$s] | zw.fileparser.parse | return((:size,:md5,:sha1,:sha256,:sha512,:mime))", opts={"vars": {"s": sha256_str}})
+            sz = await axon.size(sha256)
+            hs = await axon.hashset(sha256)
+            self.eq(props, (sz, hs["md5"], hs["sha1"], hs["sha256"], hs["sha512"], "text/plain"))
             
             self.eq(await core.count("meta:source=$g +:name=zw.fileparser", opts={"vars": {"g": fplib.svc_guid}}), 1)
-            self.eq(await core.count("meta:source:name=zw.fileparser -(seen)> * +file:bytes=$s", opts={"vars": {"s": ls_sha256_str}}), 1)
+            self.eq(await core.count("meta:source:name=zw.fileparser -(seen)> * +file:bytes=$s", opts={"vars": {"s": sha256_str}}), 1)
 
     async def test_modeling_pe_exe(self):
         async with self.getTestFpCore() as (fp, axon, core):
@@ -186,11 +186,14 @@ class SynapseFileparserTest(s_test.SynTest):
             core: s_core.Cortex
 
             ls_sha256 = "7effe56efc49e3d252a84d8173712bad05beef4def460021a1c7865247125fee"
-            self.eq(await core.count("[file:bytes=$s] | zw.fileparser.parse", opts={"vars": {"s": ls_sha256}}), 1)
+            self.eq(await core.count("[file:bytes=$s] | zw.fileparser.parse | +:mime='application/x-elf'", opts={"vars": {"s": ls_sha256}}), 1)
 
             self.eq(await core.count("file:bytes=$s -> _zw:file:mime:elf:segment", opts={"vars": {"s": ls_sha256}}), 13)
             self.eq(await core.count("file:bytes=$s -> _zw:file:mime:elf:segment -> _zw:file:mime:elf:section", opts={"vars": {"s": ls_sha256}}), 23)
-
             self.eq(await core.callStorm("file:bytes=$s -> _zw:file:mime:elf:segment +:disksize=80273 return ((:hash,:memsize,:size,:type,:type:raw))", opts={"vars": {"s": ls_sha256}}), ("aa1952d71027827a269a56fd57db55878da4950e2bd067afc9fb119292edfcfb", 80273, 80273, 1, 1))
-            
             self.eq(await core.callStorm("file:bytes=$s -> _zw:file:mime:elf:segment -> _zw:file:mime:elf:section +:name='.text' return ((:segment,:hash,:size,:offset,:type,:type:raw))", opts={"vars": {"s": ls_sha256}}), ("46ef0c957dfc0814761fe28ce2457783", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", 80227, 16416, 1, 1))
+
+            self.eq(await core.callStorm("file:bytes=$s return((:_mime:elf:imphash,:_mime:elf:exphash))", opts={"vars": {"s": ls_sha256}}), ("68a5cd470d526fa45cfd3ad2190ea02865e22c38889618af9db2f5209278594e", "c48b483cf51b62bc5aaed13d62c8c28a7b5ef9ed7646837aad194beb50fb6732"))
+            self.eq(await core.callStorm("file:bytes=$s return((:_mime:elf:os,:_mime:elf:os:raw))", opts={"vars": {"s": ls_sha256}}), (0, 0))
+            self.eq(await core.callStorm("file:bytes=$s return((:_mime:elf:type,:_mime:elf:type:raw))", opts={"vars": {"s": ls_sha256}}), (3, 3))
+            self.eq(await core.callStorm("file:bytes=$s return(:_exe:bitness)", opts={"vars": {"s": ls_sha256}}), 64)

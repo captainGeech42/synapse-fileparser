@@ -1,6 +1,47 @@
 """Lookup tables and constants for various file formats."""
 
-# The program header p_type fields for an ELF
+# Valid values for the bitness of an executable file
+VALID_BITNESS = (8, 16, 32, 64)
+
+# The ELF header et_type value
+ELF_ET_TYPE = {
+    0: ("ET_NONE", "Unknown"),
+    1: ("ET_REL", "Relocatable file"),
+    2: ("ET_EXEC", "Executable file"),
+    3: ("ET_DYN", "Shared object"),
+    4: ("ET_CORE", "Core file")
+}
+
+# range of values for OS-specific e_type values (inclusive)
+ELF_ET_TYPE_OS_RANGE = (0xfe00, 0xfeff)
+
+# range of values for processor-specific e_type values (inclusive)
+ELF_ET_TYPE_PROC_RANGE = (0xff00, 0xffff)
+
+def getElfEtTypeTuple() -> tuple:
+    return tuple([(x, ELF_ET_TYPE[x][1].lower()) for x in ELF_ET_TYPE.keys()])
+
+# The possible values for the ELF header e_ident OSABI field
+ELF_OSABI = {
+    0: ("ELFOSABI_NONE", "System-V"),
+    1: ("ELFOSABI_HPUX", "HP-UX"),
+    2: ("ELFOSABI_NETBSD", "NetBSD"),
+    3: ("ELFOSABI_LINUX", "Linux"),
+    6: ("ELFOSABI_SOLARIS", "Solaris"),
+    7: ("ELFOSABI_AIX", "AIX"),
+    8: ("ELFOSABI_IRIX", "IRIX"),
+    9: ("ELFOSABI_FREEBSD", "FreeBSD"),
+    10: ("ELFOSABI_TRU64", "Tru64"),
+    11: ("ELFOSABI_MODESTO", "Novell Modesto"),
+    12: ("ELFOSABI_OPENBSD", "OpenBSD"),
+    13: ("ELFOSABI_OPENVMS", "OpenVMS"),
+    14: ("ELFOSABI_NSK", "Non-Stop Kernel")
+}
+
+def getElfOsabiTuple() -> tuple:
+    return tuple([(x, ELF_OSABI[x][1].lower()) for x in ELF_OSABI.keys()])
+
+# The possible values for the ELF program header p_type field
 ELF_PH_TYPE = {
     0: ("PT_NULL", "Unused entry"),
     1: ("PT_LOAD", "Loadable segment"),
@@ -21,7 +62,7 @@ ELF_PH_TYPE_OS_RANGE = (0x60000000, 0x6fffffff)
 # range of values for processor-specific p_type values (inclusive)
 ELF_PH_TYPE_PROC_RANGE = (0x70000000, 0x7fffffff)
 
-# The section header sh_type fields for an ELF
+# The possible values for the ELF section header sh_type field
 ELF_SH_TYPE = {
     0: ("SHT_NULL", "Unused entry"),
     1: ("SHT_PROGBITS", "Program data"),

@@ -25,4 +25,6 @@ def get_modules() -> list[f_module.StormModule]:
             .add_conf("mverkey", f_consts.svc_migrationkey)
             .add_conf("elfphenum", f_lookup.getElfPhTypeTuple())
             .add_conf("elfshenum", f_lookup.getElfShTypeTuple())
+            .add_conf("elfetenum", f_lookup.getElfEtTypeTuple())
+            .add_conf("elfosabienum", f_lookup.getElfOsabiTuple())
     ]

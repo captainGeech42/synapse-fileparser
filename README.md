@@ -115,11 +115,22 @@ _ordinal: int
 ### `file:bytes`
 
 ```  
-// architecture of the executable file
-_exe:arch: str
+// bitness of the executable file
+_exe:bitness: str
 
 // exphash from pefile
 _mime:pe:exphash: hash:sha256
+
+// imp/exphash by the parser
+_mime:elf:imphash: hash:sha256
+_mime:elf:exphash: hash:sha256
+
+// e_ident[EI_OSABI] value
+_mime:elf:os: enum
+_mime:elf:os:raw: int
+
+// e_type
+_mime:elf:type: enum
 ```
 
 ### `file:subfile`

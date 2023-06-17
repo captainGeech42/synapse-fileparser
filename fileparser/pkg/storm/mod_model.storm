@@ -1,9 +1,6 @@
 // Module for handling model migrations
 
 function __migrations000() {
-    if (not $lib.model.prop(file:bytes:_exe:arch)) {
-        $lib.model.ext.addFormProp(file:bytes, _exe:arch, (str, ({'lower': $lib.true, 'strip': $lib.true})), ({'doc': 'The architecture for the executable'}))
-    }
     if (not $lib.model.prop(file:bytes:_mime:pe:exphash)) {
         $lib.model.ext.addFormProp(file:bytes, _mime:pe:exphash, (hash:sha256, ({})), ({'doc': 'The PE export hash of the file as calculated by pefile; https://github.com/erocarrera/pefile .'}))
     }
@@ -60,8 +57,31 @@ function __migrations000() {
     }
 }
 
+function __migrations001() {
+    if (not $lib.model.prop(file:bytes:_mime:elf:imphash)) {
+        $lib.model.ext.addFormProp(file:bytes, _mime:elf:imphash, (hash:sha256, ({})), ({'doc': 'The ELF import hash of the file.'}))
+    }
+    if (not $lib.model.prop(file:bytes:_mime:elf:exphash)) {
+        $lib.model.ext.addFormProp(file:bytes, _mime:elf:exphash, (hash:sha256, ({})), ({'doc': 'The ELF export hash of the file.'}))
+    }
+    if (not $lib.model.prop(file:bytes:_mime:elf:os)) {
+        $lib.model.ext.addFormProp(file:bytes, _mime:elf:os, (int, ({'enums': $modconf.elfosabienum})), ({'doc': 'The normalized OS value of the ELF from the ELF header.'}))
+        $lib.model.ext.addFormProp(file:bytes, _mime:elf:os:raw, (int, ({})), ({'doc': 'The raw OS value of the ELF from the ELF header.'}))
+    }
+    if (not $lib.model.prop(file:bytes:_mime:elf:type)) {
+        $lib.model.ext.addFormProp(file:bytes, _mime:elf:type, (int, ({'enums': $modconf.elfetenum})), ({'doc': 'The normalized type value from the ELF header.'}))
+    }
+    if (not $lib.model.prop(file:bytes:_mime:elf:type:raw)) {
+        $lib.model.ext.addFormProp(file:bytes, _mime:elf:type:raw, (int, ({})), ({'doc': 'The raw type value from the ELF header. For values in the OS- and processor-specific ranges, only type:raw is set.'}))
+    }
+    if (not $lib.model.prop(file:bytes:_exe:bitness)) {
+        $lib.model.ext.addFormProp(file:bytes, _exe:bitness, (int, ({})), ({'doc': 'The bitness of the executable.'}))
+    }
+}
+
 $__migrations = ([
     $__migrations000,
+    $__migrations001,
 ])
 
 function executeMigrations() {
