@@ -116,10 +116,13 @@ _ordinal: int
 
 ```  
 // bitness of the executable file
-_exe:bitness: str
+_exe:bitness: int
 
 // exphash from pefile
 _mime:pe:exphash: hash:sha256
+
+// timestamp from debug directory entry
+_mime:pe:debug:time: time
 
 // imp/exphash by the parser
 _mime:elf:imphash: hash:sha256
