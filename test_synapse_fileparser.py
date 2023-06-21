@@ -1,4 +1,5 @@
 import os
+import re
 import copy
 import asyncio
 import logging
@@ -14,7 +15,7 @@ import fileparser as fplib
 
 logging.getLogger().setLevel(logging.DEBUG)
 
-# HOLY GRAIL REFERENCE FOR TESTING THIS SHIT: https://github.com/vertexproject/synapse/blob/1dc3a2a4fa25537e9a4f88e6923913079ebcf77f/synapse/tests/test_lib_stormsvc.py
+MIGRATION_LOG_PAT = re.compile(r"fileparser model migrations finished, now at version \d+\n")
 
 class SynapseFileparserTest(s_test.SynTest):
     
@@ -49,10 +50,19 @@ class SynapseFileparserTest(s_test.SynTest):
 
         async with self.getTestFileparser(conf=conf, dirn=dirn) as (fp, axon):
             async with self.getTestCore() as core:
-                await core.callStorm("service.add fileparser $url", opts={"vars": {"url": fp.getLocalUrl()}})
+                # make sure the migrations are properly executed and logged
+                with self.getAsyncLoggerStream("synapse.storm.log", "migrations finished") as stream:
+                    await core.callStorm("service.add fileparser $url", opts={"vars": {"url": fp.getLocalUrl()}})
 
-                # wait for the service to finish initialization
-                await core.nodes("$lib.service.wait(fileparser)")
+                    # wait for the service to finish initialization
+                    await core.nodes("$lib.service.wait(fileparser)")
+
+                    self.true(await stream.wait(timeout=10))
+
+                    # check migration logging
+                    logs = stream.getvalue()
+                    self.true("executing fileparser model migrations, current version is 0" in logs)
+                    self.true(MIGRATION_LOG_PAT.findall(logs))
             
                 # upload the test files
                 await self._t_uploadTestFiles(axon)

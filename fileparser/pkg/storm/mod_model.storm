@@ -94,9 +94,12 @@ $__migrations = ([
 function executeMigrations() {
     $ver = $lib.globals.get($modconf.mverkey, default=0)
 
+    $lib.log.info(`executing fileparser model migrations, current version is {$ver}`)
+
     for $f in $__migrations.slice($ver) {
         $f()
     }
 
     $lib.globals.set($modconf.mverkey, $__migrations.size())
+    $lib.log.info(`fileparser model migrations finished, now at version {$__migrations.size()}`)
 }

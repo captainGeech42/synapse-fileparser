@@ -34,9 +34,7 @@ class FileparserCell(s_cell.Cell):
     async def initServiceRuntime(self):
         await super().initServiceRuntime()
 
-        self.axon_url = self.conf.get("axon")
-        if not self.axon_url:
-            raise s_exc.NeedConfValu(mesg="The fileparser service has no axon url configured")
+        self.axon_url = self.conf.reqConfValu("axon")
 
         self.parsers: dict[str, f_parsers.FileParser] = {}
         for cls in f_parsers.get_parsers():
