@@ -8,7 +8,7 @@ COPY entrypoint.sh /vertex/synapse/entrypoint.sh
 WORKDIR /vertex
 
 COPY requirements.txt .
-RUN python -m pip install -r requirements.txt
+RUN python -m pip install -r requirements.txt --break-system-packages
 
 COPY fileparser ./fileparser/
 
